@@ -1,9 +1,16 @@
-# Configurações locais do Claude Code (não subir ao GitHub)
+# Configurações locais do Claude Code
 .claude/settings.local.json
 
 # Pasta de deploy local (gerada automaticamente)
 _site/
 
-# Pastas do sistema
+# Pastas de fonte/design (arquivos internos, não fazem parte do site)
+Fontes/
+
+# Cache do Wrangler
+.wrangler/
+worker/.wrangler/
+
+# Sistema operacional
 .DS_Store
 Thumbs.db
