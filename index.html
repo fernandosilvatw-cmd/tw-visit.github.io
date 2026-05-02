@@ -805,8 +805,18 @@ input[type="range"]::-webkit-slider-thumb {
                             </div>
                         </div>
                         <div class="fg">
-                            <label>CNPJ</label>
-                            <input type="text" id="f-cnpj" placeholder="00.000.000/0000-00" maxlength="18">
+                            <label>Negócio</label>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <input type="text" id="f-negocio" placeholder="Selecione a empresa e busque o negócio" readonly
+                                    style="flex:1;background:#fafafa;cursor:default;">
+                                <button type="button" class="btn btn-secondary" onclick="abrirBuscaNegocio()"
+                                    title="Buscar negócios em andamento no Agendor (selecione a empresa antes)"
+                                    style="white-space:nowrap;flex-shrink:0;padding:9px 14px;">
+                                    <i class="fas fa-handshake"></i> Agendor
+                                </button>
+                            </div>
+                            <!-- ID interno do Agendor da empresa selecionada -->
+                            <input type="hidden" id="f-agendor-org-id" value="">
                         </div>
                         <div class="fg">
                             <label>Nome e Cargo do(s) Contato(s)</label>
@@ -1164,6 +1174,22 @@ input[type="range"]::-webkit-slider-thumb {
     </div>
 </div>
 
+<!-- ============================================================
+     MODAL BUSCA NEGÓCIOS AGENDOR
+     ============================================================ -->
+<div class="modal-overlay" id="modal-negocio" onclick="fecharNegocioFora(event)">
+    <div class="modal-box" style="max-width:620px;">
+        <div class="modal-head">
+            <h2><i class="fas fa-handshake" style="color:#2563eb;margin-right:8px;"></i>Negócios em Andamento — <span id="negocio-empresa-titulo" style="color:#2563eb;"></span></h2>
+            <button class="btn-close" onclick="fecharNegocio()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="padding:16px 20px 8px;">
+            <div id="negocio-status" style="font-size:12px;color:#94a3b8;margin-bottom:10px;min-height:18px;"></div>
+            <div id="negocio-lista" style="max-height:420px;overflow-y:auto;margin:0 -20px;padding:0 20px 16px;"></div>
+        </div>
+    </div>
+</div>
+
 <!-- Toast de notificação -->
 <div class="toast" id="toast">
     <i class="fas fa-check-circle" id="toast-ico"></i>
@@ -1194,8 +1220,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('cfg-nome').value = cfg.nome;
     }
 
-    // Ativa as máscaras nos campos específicos
-    document.getElementById('f-cnpj').addEventListener('input', mascaraCNPJ);
+    // Ativa máscara no campo de valor monetário
     document.getElementById('f-valor').addEventListener('input', mascaraMoeda);
 
     // Atualiza os 4 cards de resumo
@@ -1278,10 +1303,10 @@ function fecharSidebar() {
 }
 
 // =========================================================
-// MÁSCARA DE CNPJ — formata: 00.000.000/0000-00
+// MÁSCARA DE CNPJ — usada apenas na exibição da lista do Agendor
 // =========================================================
 function mascaraCNPJ(e) {
-    let v = e.target.value.replace(/\D/g, ''); // remove não-dígitos
+    let v = e.target.value.replace(/\D/g, '');
     v = v.replace(/^(\d{2})(\d)/, '$1.$2');
     v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
     v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
@@ -1328,7 +1353,8 @@ function coletarForm() {
         horaFim:      document.getElementById('f-hora-fim').value,
         rep:          document.getElementById('f-rep').value.trim(),
         empresa:      document.getElementById('f-empresa').value.trim(),
-        cnpj:         document.getElementById('f-cnpj').value,
+        negocio:      document.getElementById('f-negocio').value,
+        agendorOrgId: document.getElementById('f-agendor-org-id').value,
         segmento:     document.getElementById('f-segmento').value,
         contato:      document.getElementById('f-contato').value,
         // Objetivo
@@ -1516,7 +1542,8 @@ function editarVisita(id) {
     document.getElementById('f-hora-fim').value    = v.horaFim || '';
     document.getElementById('f-rep').value         = v.rep || '';
     document.getElementById('f-empresa').value     = v.empresa || '';
-    document.getElementById('f-cnpj').value        = v.cnpj || '';
+    document.getElementById('f-negocio').value      = v.negocio || '';
+    document.getElementById('f-agendor-org-id').value = v.agendorOrgId || '';
     document.getElementById('f-segmento').value    = v.segmento || '';
     document.getElementById('f-contato').value     = v.contato || '';
     document.getElementById('f-tipo').value        = v.tipo || '';
@@ -1649,7 +1676,7 @@ function montarRelatorio(v) {
             ${C('Horário', horario)}
             ${C('Representante', v.rep)}
             ${C('Empresa Visitada', v.empresa)}
-            ${C('CNPJ', v.cnpj)}
+            ${C('Negócio', v.negocio)}
             ${C('Segmento', v.segmento)}
             ${C('Tipo de Visita', v.tipo)}
             ${C('Contato(s)', v.contato)}
@@ -1790,8 +1817,176 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
         fecharModal();
         fecharAgendor();
+        fecharNegocio();
     }
 });
+
+// =========================================================
+// BUSCA DE NEGÓCIOS NO AGENDOR CRM
+// =========================================================
+
+// ---------------------------------------------------------
+// Abre o modal de negócios e busca via API
+// Pré-requisito: empresa deve ter sido selecionada no Agendor
+// ---------------------------------------------------------
+function abrirBuscaNegocio() {
+    const orgId    = document.getElementById('f-agendor-org-id').value;
+    const empresa  = document.getElementById('f-empresa').value.trim();
+
+    if (!orgId) {
+        toast('Selecione a empresa pelo botão "Agendor" antes de buscar negócios.', 'err');
+        return;
+    }
+
+    // Exibe o nome da empresa no título do modal
+    document.getElementById('negocio-empresa-titulo').textContent = empresa;
+    document.getElementById('modal-negocio').classList.add('open');
+
+    carregarNegociosAgendor(orgId);
+}
+
+// ---------------------------------------------------------
+// Busca negócios da empresa no Agendor (via Worker proxy)
+// ---------------------------------------------------------
+async function carregarNegociosAgendor(orgId) {
+    document.getElementById('negocio-status').innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> Buscando negócios no Agendor...';
+    document.getElementById('negocio-lista').innerHTML = '';
+
+    try {
+        const resp = await fetch(`${AGENDOR_PROXY}/deals?orgId=${orgId}`);
+
+        if (!resp.ok) {
+            const erro = await resp.json().catch(() => ({ erro: resp.statusText }));
+            throw new Error(erro.erro || `Erro HTTP ${resp.status}`);
+        }
+
+        const dados = await resp.json();
+
+        // A API retorna { data: [...] } com os negócios
+        const todos = Array.isArray(dados) ? dados : (dados.data || []);
+
+        // Filtra apenas negócios em andamento
+        // Agendor v3: dealStatus.id = 1 (Em andamento), 2 (Ganho), 3 (Perdido)
+        const emAndamento = todos.filter(n => {
+            const id   = n.dealStatus?.id;
+            const nome = (n.dealStatus?.name || '').toLowerCase();
+            return id === 1 || nome.includes('andamento') || nome === 'ongoing' || (!id && !nome);
+        });
+
+        if (emAndamento.length === 0 && todos.length > 0) {
+            // Há negócios mas nenhum em andamento — mostra todos mesmo assim
+            renderizarNegociosAgendor(todos, true);
+            document.getElementById('negocio-status').innerHTML =
+                `<span style="color:#d97706;">Nenhum negócio em andamento. Exibindo todos (${todos.length}).</span>`;
+        } else {
+            renderizarNegociosAgendor(emAndamento, false);
+            document.getElementById('negocio-status').innerHTML =
+                `${emAndamento.length} negócio(s) em andamento`;
+        }
+
+    } catch (erro) {
+        document.getElementById('negocio-status').innerHTML =
+            `<span style="color:#dc2626;"><i class="fas fa-exclamation-triangle"></i> ${erro.message}</span>`;
+        document.getElementById('negocio-lista').innerHTML = `
+            <div style="text-align:center;padding:32px;color:#94a3b8;font-size:13px;">
+                <i class="fas fa-unlink" style="font-size:28px;margin-bottom:8px;display:block;opacity:0.4;"></i>
+                Não foi possível carregar os negócios.<br>
+                Verifique a conexão com o Agendor.
+            </div>`;
+    }
+}
+
+// ---------------------------------------------------------
+// Renderiza a lista de negócios no modal
+// ---------------------------------------------------------
+function renderizarNegociosAgendor(lista, mostrandoTodos) {
+    const el = document.getElementById('negocio-lista');
+
+    if (lista.length === 0) {
+        el.innerHTML = `
+            <div style="text-align:center;padding:32px;color:#94a3b8;font-size:13px;">
+                <i class="fas fa-handshake" style="font-size:28px;margin-bottom:8px;display:block;opacity:0.4;"></i>
+                Nenhum negócio encontrado para esta empresa.
+            </div>`;
+        return;
+    }
+
+    // Cor do badge por status (dealStatus.id: 1=andamento, 2=ganho, 3=perdido)
+    const corEstagio = (n) => {
+        const id = n.dealStatus?.id;
+        if (id === 2) return '#16a34a'; // Ganho
+        if (id === 3) return '#dc2626'; // Perdido
+        return '#2563eb';              // Em andamento
+    };
+
+    const labelEstagio = (n) => n.dealStatus?.name || 'Em andamento';
+
+    el.innerHTML = lista.map((n, i) => {
+        const titulo  = n.title || n.name || n.description || `Negócio #${n.id}`;
+        // value vem em float (reais), não em centavos
+        const valor   = n.value != null && n.value > 0
+            ? 'R$ ' + Number(n.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+            : '';
+        const funil   = n.dealStage?.funnel?.name || '';
+        const estagio = n.dealStage?.name || '';
+        const cor     = corEstagio(n);
+        const label   = labelEstagio(n);
+
+        return `
+        <div onclick="selecionarNegocio(${i})"
+             style="padding:12px 14px;border-radius:8px;cursor:pointer;border:1.5px solid #f1f5f9;margin-bottom:7px;transition:all 0.15s;"
+             onmouseover="this.style.background='#f0f7ff';this.style.borderColor='#bfdbfe';"
+             onmouseout="this.style.background='';this.style.borderColor='#f1f5f9';">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                <div style="font-size:14px;font-weight:600;color:#0f172a;flex:1;">${titulo}</div>
+                <span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;
+                    background:${cor}18;color:${cor};flex-shrink:0;">${label}</span>
+            </div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;">
+                ${valor   ? `<span><i class="fas fa-dollar-sign"></i> ${valor}</span>` : ''}
+                ${funil   ? `<span><i class="fas fa-filter"></i> ${funil}</span>` : ''}
+                ${estagio ? `<span><i class="fas fa-flag"></i> ${estagio}</span>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+
+    // Guarda lista atual para o índice do onclick
+    el._listaNegocio = lista;
+}
+
+// ---------------------------------------------------------
+// Seleciona um negócio e preenche o campo do formulário
+// ---------------------------------------------------------
+function selecionarNegocio(indice) {
+    const lista = document.getElementById('negocio-lista')._listaNegocio || [];
+    const n = lista[indice];
+    if (!n) return;
+
+    const titulo = n.title || n.name || n.description || `Negócio #${n.id}`;
+    document.getElementById('f-negocio').value = titulo;
+
+    // Preenche o valor da oportunidade com o valor do negócio
+    if (n.value != null && n.value > 0) {
+        const valorFmt = Number(n.value).toFixed(2)
+            .replace('.', ',')
+            .replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+        document.getElementById('f-valor').value = 'R$ ' + valorFmt;
+    }
+
+    fecharNegocio();
+    toast(`Negócio "${titulo}" selecionado.`, 'ok');
+}
+
+// ---------------------------------------------------------
+// Fecha o modal de negócios
+// ---------------------------------------------------------
+function fecharNegocio() {
+    document.getElementById('modal-negocio').classList.remove('open');
+}
+function fecharNegocioFora(e) {
+    if (e.target === document.getElementById('modal-negocio')) fecharNegocio();
+}
 
 // =========================================================
 // INTEGRAÇÃO AGENDOR CRM
@@ -1986,10 +2181,11 @@ function selecionarEmpresaAgendor(indice) {
     // Preenche nome da empresa
     document.getElementById('f-empresa').value = nome;
 
-    // Preenche CNPJ com máscara
-    if (e.cnpj) {
-        document.getElementById('f-cnpj').value = formatarCNPJ(e.cnpj);
-    }
+    // Salva o ID interno do Agendor para buscar negócios depois
+    document.getElementById('f-agendor-org-id').value = e.id || '';
+
+    // Limpa o campo de negócio (empresa mudou, negócio anterior não é mais válido)
+    document.getElementById('f-negocio').value = '';
 
     // Tenta mapear o setor do Agendor para as opções do formulário
     const setorBruto = (e.sector?.name || '').toLowerCase()
