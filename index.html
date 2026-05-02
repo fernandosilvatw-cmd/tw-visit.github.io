@@ -1878,6 +1878,8 @@ async function carregarTodasEmpresas() {
             // Para quando não há próxima página ou já carregamos tudo
             if (!dados.links?.next || agendorEmpresas.length >= totalGeral) break;
 
+            // Pequena pausa para respeitar o limite de 4 req/s do Agendor
+            await new Promise(r => setTimeout(r, 260));
             pagina++;
         }
 
@@ -1916,7 +1918,7 @@ function filtrarAgendor(texto) {
     }
     const f = texto.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     const filtradas = agendorEmpresas.filter(e => {
-        const nome = (e.nickname || e.legalName || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        const nome = (e.name || e.legalName || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
         const cnpj = (e.cnpj || '').replace(/\D/g, '');
         return nome.includes(f) || cnpj.includes(f);
     });
