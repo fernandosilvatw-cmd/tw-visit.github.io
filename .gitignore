@@ -1,6 +1,9 @@
 # Configurações locais do Claude Code (não subir ao GitHub)
 .claude/settings.local.json
 
+# Pasta de deploy local (gerada automaticamente)
+_site/
+
 # Pastas do sistema
 .DS_Store
 Thumbs.db
