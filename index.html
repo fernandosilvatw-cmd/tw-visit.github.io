@@ -795,7 +795,14 @@ input[type="range"]::-webkit-slider-thumb {
                         </div>
                         <div class="fg">
                             <label>Empresa Visitada *</label>
-                            <input type="text" id="f-empresa" placeholder="Nome da empresa" required>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <input type="text" id="f-empresa" placeholder="Nome da empresa" required style="flex:1;">
+                                <button type="button" class="btn btn-secondary" onclick="abrirBuscaAgendor()"
+                                    title="Buscar empresa no Agendor CRM"
+                                    style="white-space:nowrap;flex-shrink:0;padding:9px 14px;">
+                                    <i class="fas fa-search"></i> Agendor
+                                </button>
+                            </div>
                         </div>
                         <div class="fg">
                             <label>CNPJ</label>
@@ -1119,6 +1126,40 @@ input[type="range"]::-webkit-slider-thumb {
             <button class="btn btn-secondary" onclick="fecharModal()">
                 <i class="fas fa-times"></i> Fechar
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     MODAL BUSCA AGENDOR
+     ============================================================ -->
+<div class="modal-overlay" id="modal-agendor" onclick="fecharAgendorFora(event)">
+    <div class="modal-box" style="max-width:600px;">
+        <div class="modal-head">
+            <h2><i class="fas fa-building" style="color:#2563eb;margin-right:8px;"></i>Buscar Empresa no Agendor</h2>
+            <button class="btn-close" onclick="fecharAgendor()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="padding:16px 20px 8px;">
+
+            <!-- Barra de filtro local + botão de atualizar -->
+            <div style="display:flex;gap:8px;margin-bottom:14px;">
+                <div style="position:relative;flex:1;">
+                    <i class="fas fa-search" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:13px;pointer-events:none;"></i>
+                    <input type="text" id="agendor-busca"
+                           placeholder="Filtrar por nome da empresa..."
+                           oninput="filtrarAgendor(this.value)"
+                           style="width:100%;padding:9px 12px 9px 34px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:Inter,sans-serif;font-size:13px;outline:none;">
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="recarregarAgendor()" title="Recarregar lista do Agendor" style="flex-shrink:0;">
+                    <i class="fas fa-sync-alt"></i> Atualizar
+                </button>
+            </div>
+
+            <!-- Status (carregando / erro / contagem) -->
+            <div id="agendor-status" style="font-size:12px;color:#94a3b8;margin-bottom:10px;min-height:18px;"></div>
+
+            <!-- Lista de empresas -->
+            <div id="agendor-lista" style="max-height:400px;overflow-y:auto;margin:0 -20px;padding:0 20px 16px;"></div>
         </div>
     </div>
 </div>
@@ -1744,10 +1785,259 @@ function confirmarSaida() {
     }
 }
 
-// Tecla ESC fecha o modal
+// Tecla ESC fecha qualquer modal aberto
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') fecharModal();
+    if (e.key === 'Escape') {
+        fecharModal();
+        fecharAgendor();
+    }
 });
+
+// =========================================================
+// INTEGRAÇÃO AGENDOR CRM
+// =========================================================
+
+// URL do Worker proxy (token do Agendor fica seguro no servidor)
+const AGENDOR_PROXY = 'https://tw-agendor-proxy.fernando-silvatw.workers.dev';
+
+// Chave do cache no localStorage
+const AGENDOR_CACHE_KEY = 'agendor-empresas-cache';
+
+// Cache expira em 1 hora (em milissegundos)
+const AGENDOR_CACHE_TTL = 60 * 60 * 1000;
+
+// Lista completa carregada (usada para filtrar sem nova requisição)
+let agendorEmpresas = [];
+let agendorCarregando = false;
+
+// ---------------------------------------------------------
+// Abre o modal de busca e carrega as empresas se necessário
+// ---------------------------------------------------------
+function abrirBuscaAgendor() {
+    document.getElementById('modal-agendor').classList.add('open');
+    document.getElementById('agendor-busca').value = '';
+
+    // Tenta usar o cache local primeiro
+    const cacheRaw = localStorage.getItem(AGENDOR_CACHE_KEY);
+    if (cacheRaw) {
+        const cache = JSON.parse(cacheRaw);
+        const idadeCache = Date.now() - cache.timestamp;
+        if (idadeCache < AGENDOR_CACHE_TTL && cache.dados.length > 0) {
+            agendorEmpresas = cache.dados;
+            mostrarStatusAgendor(`${agendorEmpresas.length} empresas carregadas do cache`);
+            renderizarListaAgendor(agendorEmpresas);
+            document.getElementById('agendor-busca').focus();
+            return;
+        }
+    }
+
+    // Cache expirado ou vazio — busca do Agendor
+    carregarTodasEmpresas();
+}
+
+// ---------------------------------------------------------
+// Busca todas as empresas do Agendor (com paginação automática)
+// ---------------------------------------------------------
+async function carregarTodasEmpresas() {
+    if (agendorCarregando) return;
+    agendorCarregando = true;
+
+    mostrarStatusAgendor('<i class="fas fa-spinner fa-spin"></i> Conectando ao Agendor...');
+    document.getElementById('agendor-lista').innerHTML = '';
+    agendorEmpresas = [];
+
+    let pagina = 1;
+    let totalGeral = 0;
+
+    try {
+        // Busca página por página até acabar
+        while (true) {
+            mostrarStatusAgendor(
+                `<i class="fas fa-spinner fa-spin"></i> Carregando página ${pagina}... (${agendorEmpresas.length} empresas)`
+            );
+
+            const resp = await fetch(`${AGENDOR_PROXY}?page=${pagina}&per_page=100`);
+
+            if (!resp.ok) {
+                const erro = await resp.json().catch(() => ({ erro: resp.statusText }));
+                throw new Error(erro.erro || `Erro HTTP ${resp.status}`);
+            }
+
+            // Lê o total de registros do cabeçalho
+            const total = parseInt(resp.headers.get('X-Total-Count') || '0', 10);
+            if (pagina === 1) totalGeral = total;
+
+            const dados = await resp.json();
+
+            // A API retorna { data: [...] } ou diretamente um array
+            const lista = Array.isArray(dados) ? dados : (dados.data || []);
+            if (lista.length === 0) break;
+
+            agendorEmpresas.push(...lista);
+
+            // Mostra resultados parciais enquanto carrega
+            renderizarListaAgendor(agendorEmpresas);
+
+            // Para quando já carregamos tudo
+            if (agendorEmpresas.length >= totalGeral || lista.length < 100) break;
+
+            pagina++;
+        }
+
+        // Salva no cache local
+        localStorage.setItem(AGENDOR_CACHE_KEY, JSON.stringify({
+            timestamp: Date.now(),
+            dados: agendorEmpresas
+        }));
+
+        mostrarStatusAgendor(`${agendorEmpresas.length} empresas encontradas no Agendor`);
+        document.getElementById('agendor-busca').focus();
+
+    } catch (erro) {
+        mostrarStatusAgendor(
+            `<span style="color:#dc2626;"><i class="fas fa-exclamation-triangle"></i> Erro: ${erro.message}</span>`
+        );
+        document.getElementById('agendor-lista').innerHTML = `
+            <div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">
+                <i class="fas fa-plug" style="font-size:28px;margin-bottom:8px;display:block;"></i>
+                Verifique se o token do Agendor está configurado no Worker.<br>
+                <small>Execute: <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">wrangler secret put AGENDOR_TOKEN</code></small>
+            </div>`;
+    } finally {
+        agendorCarregando = false;
+    }
+}
+
+// ---------------------------------------------------------
+// Filtra a lista já carregada pelo texto digitado
+// ---------------------------------------------------------
+function filtrarAgendor(texto) {
+    if (!texto.trim()) {
+        renderizarListaAgendor(agendorEmpresas);
+        mostrarStatusAgendor(`${agendorEmpresas.length} empresas encontradas no Agendor`);
+        return;
+    }
+    const f = texto.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const filtradas = agendorEmpresas.filter(e => {
+        const nome = (e.nickname || e.legalName || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        const cnpj = (e.cnpj || '').replace(/\D/g, '');
+        return nome.includes(f) || cnpj.includes(f);
+    });
+    renderizarListaAgendor(filtradas);
+    mostrarStatusAgendor(`${filtradas.length} resultado(s) para "${texto}"`);
+}
+
+// ---------------------------------------------------------
+// Renderiza a lista de empresas no modal
+// ---------------------------------------------------------
+function renderizarListaAgendor(lista) {
+    const el = document.getElementById('agendor-lista');
+
+    if (lista.length === 0) {
+        el.innerHTML = `
+            <div style="text-align:center;padding:32px;color:#94a3b8;font-size:13px;">
+                <i class="fas fa-building" style="font-size:28px;margin-bottom:8px;display:block;opacity:0.4;"></i>
+                Nenhuma empresa encontrada.
+            </div>`;
+        return;
+    }
+
+    el.innerHTML = lista.map((e, i) => {
+        const nome   = e.nickname || e.legalName || '(sem nome)';
+        const cnpj   = e.cnpj ? formatarCNPJ(e.cnpj) : '';
+        const setor  = e.sector || e.category || '';
+        const cidade = e.address?.city ? `${e.address.city}${e.address.state ? '/' + e.address.state : ''}` : '';
+
+        return `
+        <div onclick="selecionarEmpresaAgendor(${i})"
+             style="padding:11px 14px;border-radius:8px;cursor:pointer;border:1.5px solid #f1f5f9;margin-bottom:6px;transition:all 0.15s;"
+             onmouseover="this.style.background='#f0f7ff';this.style.borderColor='#bfdbfe';"
+             onmouseout="this.style.background='';this.style.borderColor='#f1f5f9';">
+            <div style="font-size:14px;font-weight:600;color:#0f172a;">${nome}</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:3px;display:flex;gap:12px;flex-wrap:wrap;">
+                ${cnpj   ? `<span><i class="fas fa-id-card"></i> ${cnpj}</span>` : ''}
+                ${setor  ? `<span><i class="fas fa-tag"></i> ${setor}</span>` : ''}
+                ${cidade ? `<span><i class="fas fa-map-marker-alt"></i> ${cidade}</span>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+
+    // Armazena lista filtrada temporariamente para o índice do onclick
+    el._listaAtual = lista;
+}
+
+// ---------------------------------------------------------
+// Seleciona uma empresa e preenche os campos do formulário
+// ---------------------------------------------------------
+function selecionarEmpresaAgendor(indice) {
+    const lista = document.getElementById('agendor-lista')._listaAtual || agendorEmpresas;
+    const empresa = lista[indice];
+    if (!empresa) return;
+
+    // Preenche o nome da empresa
+    document.getElementById('f-empresa').value = empresa.nickname || empresa.legalName || '';
+
+    // Preenche o CNPJ com máscara
+    if (empresa.cnpj) {
+        document.getElementById('f-cnpj').value = formatarCNPJ(empresa.cnpj);
+    }
+
+    // Tenta mapear o setor do Agendor para as opções do formulário
+    if (empresa.sector || empresa.category) {
+        const setorAgendor = (empresa.sector || empresa.category || '').toLowerCase();
+        const mapeamento = {
+            'tecnologia': 'Tecnologia', 'tech': 'Tecnologia', 'ti': 'Tecnologia', 'software': 'Tecnologia',
+            'saúde': 'Saúde', 'saude': 'Saúde', 'health': 'Saúde', 'farmac': 'Saúde',
+            'educação': 'Educação', 'educacao': 'Educação', 'ensino': 'Educação',
+            'varejo': 'Varejo', 'retail': 'Varejo', 'comercio': 'Varejo', 'comércio': 'Varejo',
+            'industria': 'Indústria', 'indústria': 'Indústria', 'manufat': 'Indústria',
+            'agro': 'Agronegócio', 'agronegocio': 'Agronegócio', 'agronegócio': 'Agronegócio',
+            'financeiro': 'Financeiro', 'financ': 'Financeiro', 'banco': 'Financeiro',
+            'logística': 'Logística', 'logistica': 'Logística', 'transport': 'Logística',
+        };
+        const segmento = Object.keys(mapeamento).find(k => setorAgendor.includes(k));
+        if (segmento) document.getElementById('f-segmento').value = mapeamento[segmento];
+    }
+
+    fecharAgendor();
+    toast(`Empresa "${empresa.nickname || empresa.legalName}" selecionada do Agendor.`, 'ok');
+}
+
+// ---------------------------------------------------------
+// Formata string de CNPJ para o padrão 00.000.000/0000-00
+// ---------------------------------------------------------
+function formatarCNPJ(cnpj) {
+    const n = cnpj.replace(/\D/g, '');
+    if (n.length !== 14) return cnpj;
+    return n.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+}
+
+// ---------------------------------------------------------
+// Limpa o cache e recarrega do Agendor
+// ---------------------------------------------------------
+function recarregarAgendor() {
+    localStorage.removeItem(AGENDOR_CACHE_KEY);
+    agendorEmpresas = [];
+    document.getElementById('agendor-busca').value = '';
+    carregarTodasEmpresas();
+}
+
+// ---------------------------------------------------------
+// Exibe texto de status no modal
+// ---------------------------------------------------------
+function mostrarStatusAgendor(html) {
+    document.getElementById('agendor-status').innerHTML = html;
+}
+
+// ---------------------------------------------------------
+// Fecha o modal do Agendor
+// ---------------------------------------------------------
+function fecharAgendor() {
+    document.getElementById('modal-agendor').classList.remove('open');
+}
+function fecharAgendorFora(e) {
+    if (e.target === document.getElementById('modal-agendor')) fecharAgendor();
+}
 </script>
 </body>
 </html>
