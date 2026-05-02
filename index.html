@@ -2026,6 +2026,11 @@ function selecionarNegocio(indice) {
         document.getElementById('f-valor').value = 'R$ ' + valorFmt;
     }
 
+    // Preenche o representante com o responsável pelo negócio no Agendor
+    if (n.owner?.name) {
+        document.getElementById('f-rep').value = n.owner.name;
+    }
+
     fecharNegocio();
     toast(`Negócio "${titulo}" selecionado.`, 'ok');
 
