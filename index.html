@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tecwise — Visitas Técnicas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+/* ============================================================
+   RESET E BASE
+   ============================================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+    width: 220px;
+    background: #1a2333;
+    min-height: 100vh;
+    position: fixed;
+    top: 0; left: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 500;
+    transition: transform 0.3s ease;
+}
+
+/* Logo */
+.sidebar-logo {
+    padding: 22px 16px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.logo-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.logo-icon-box {
+    width: 38px; height: 38px;
+    background: #2563eb;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.logo-texts .brand {
+    font-size: 15px;
+    font-weight: 800;
+    color: white;
+    letter-spacing: 1px;
+    line-height: 1.1;
+}
+.logo-texts .tagline {
+    font-size: 8px;
+    color: #64748b;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+/* Navegação */
+.sidebar-nav { flex: 1; padding: 12px 8px; }
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 3px;
+    transition: all 0.18s ease;
+    text-decoration: none;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+}
+.nav-item i { width: 15px; text-align: center; font-size: 13px; flex-shrink: 0; }
+.nav-item:hover { background: rgba(255,255,255,0.07); color: #e2e8f0; }
+.nav-item.active { background: #2563eb; color: white; }
+
+/* Rodapé sidebar */
+.sidebar-footer {
+    padding: 10px 8px 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ============================================================
+   ÁREA PRINCIPAL
+   ============================================================ */
+.main-content {
+    margin-left: 220px;
+    flex: 1;
+    padding: 26px 28px;
+    min-height: 100vh;
+}
+
+/* Cabeçalho de página */
+.page-header { margin-bottom: 22px; }
+.page-header h1 { font-size: 21px; font-weight: 700; color: #0f172a; }
+.page-header p { font-size: 13px; color: #64748b; margin-top: 3px; }
+
+/* ============================================================
+   CARDS DE RESUMO
+   ============================================================ */
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+}
+.summary-card {
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.card-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.card-icon.blue   { background: #dbeafe; color: #2563eb; }
+.card-icon.green  { background: #dcfce7; color: #16a34a; }
+.card-icon.purple { background: #f3e8ff; color: #9333ea; }
+.card-icon.orange { background: #ffedd5; color: #ea580c; }
+.card-info .lbl {
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.card-info .val {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+/* ============================================================
+   SEÇÕES DO FORMULÁRIO (CARDS BRANCOS)
+   ============================================================ */
+.form-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    margin-bottom: 14px;
+    overflow: hidden;
+}
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fafafa;
+}
+.sec-icon {
+    width: 30px; height: 30px;
+    background: #dbeafe;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    color: #2563eb;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+.section-header h3 {
+    font-size: 11px;
+    font-weight: 700;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+.section-body { padding: 20px; }
+
+/* ============================================================
+   CAMPOS DO FORMULÁRIO
+   ============================================================ */
+.fg { display: flex; flex-direction: column; gap: 5px; }
+.fg label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+.fg input, .fg select, .fg textarea {
+    padding: 9px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: #1e293b;
+    background: white;
+    transition: border-color 0.18s, box-shadow 0.18s;
+    outline: none;
+}
+.fg input:focus, .fg select:focus, .fg textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+.fg textarea { resize: vertical; min-height: 78px; line-height: 1.5; }
+
+/* Grids de campos */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.g4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
+.gcol2 { grid-column: 1 / -1; }
+
+/* Separador entre grupos de campos */
+.mb14 { margin-bottom: 14px; }
+
+/* ============================================================
+   BOTÕES DE INTERESSE (Frio/Morno/Quente)
+   ============================================================ */
+.interesse-row { display: flex; gap: 10px; }
+.btn-int {
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.18s;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    color: #64748b;
+}
+.btn-int:hover { border-color: #cbd5e1; }
+.btn-int.sel-frio   { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+.btn-int.sel-morno  { background: #fef3c7; border-color: #fcd34d; color: #b45309; }
+.btn-int.sel-quente { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
+
+/* Slider */
+.slider-wrap { display: flex; flex-direction: column; gap: 7px; }
+.slider-top { display: flex; justify-content: space-between; font-size: 12px; color: #64748b; }
+.slider-top .sv { font-weight: 700; color: #2563eb; font-size: 14px; }
+input[type="range"] {
+    width: 100%;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #e2e8f0;
+    border-radius: 3px;
+    outline: none;
+    border: none;
+    padding: 0;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #2563eb;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(37,99,235,0.3);
+}
+
+/* ============================================================
+   BOTÕES GERAIS
+   ============================================================ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.18s;
+    text-decoration: none;
+}
+.btn-primary   { background: #2563eb; color: white; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-success   { background: #16a34a; color: white; }
+.btn-success:hover { background: #15803d; }
+.btn-danger    { background: #dc2626; color: white; }
+.btn-danger:hover { background: #b91c1c; }
+.btn-secondary { background: #f1f5f9; color: #475569; border: 1.5px solid #e2e8f0; }
+.btn-secondary:hover { background: #e2e8f0; }
+.btn-sm { padding: 7px 13px; font-size: 12px; }
+
+.action-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 18px 20px;
+}
+
+/* ============================================================
+   HISTÓRICO DE VISITAS
+   ============================================================ */
+.search-wrap {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.search-wrap i { color: #94a3b8; font-size: 14px; }
+.search-wrap input {
+    flex: 1;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    outline: none;
+}
+.search-wrap input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+
+.visita-card {
+    background: white;
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.vc-info { flex: 1; min-width: 0; }
+.vc-empresa { font-size: 15px; font-weight: 700; color: #0f172a; }
+.vc-meta { font-size: 12px; color: #64748b; margin-top: 4px; }
+.vc-meta span { margin-right: 12px; }
+.vc-badges { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+.vc-actions { display: flex; gap: 7px; flex-shrink: 0; }
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.badge-frio   { background: #dbeafe; color: #1d4ed8; }
+.badge-morno  { background: #fef3c7; color: #b45309; }
+.badge-quente { background: #fee2e2; color: #b91c1c; }
+.badge-neutro { background: #f1f5f9; color: #64748b; }
+
+/* Estado vazio */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #94a3b8;
+}
+.empty-state i { font-size: 42px; margin-bottom: 12px; display: block; }
+.empty-state p { font-size: 14px; }
+
+/* ============================================================
+   PÁGINAS
+   ============================================================ */
+.page-section { display: none; }
+.page-section.active { display: block; }
+
+/* Cards sobre e config */
+.info-card {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    max-width: 680px;
+}
+.info-card h2 { font-size: 17px; font-weight: 700; margin-bottom: 12px; color: #0f172a; }
+.info-card p { font-size: 14px; color: #475569; line-height: 1.75; margin-bottom: 10px; }
+
+/* ============================================================
+   MODAL DO RELATÓRIO
+   ============================================================ */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.55);
+    z-index: 900;
+    overflow-y: auto;
+    padding: 28px 16px;
+}
+.modal-overlay.open {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+.modal-box {
+    background: white;
+    border-radius: 14px;
+    max-width: 880px;
+    width: 100%;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fafafa;
+}
+.modal-head h2 { font-size: 15px; font-weight: 700; color: #0f172a; }
+.btn-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 18px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.15s;
+}
+.btn-close:hover { background: #f1f5f9; color: #1e293b; }
+.modal-body { padding: 28px; }
+.modal-foot {
+    display: flex;
+    gap: 10px;
+    padding: 14px 24px;
+    border-top: 1px solid #f1f5f9;
+    background: #fafafa;
+}
+
+/* ============================================================
+   RELATÓRIO (dentro do modal e na impressão)
+   ============================================================ */
+.relatorio { font-family: 'Inter', sans-serif; }
+
+.rel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 18px;
+    border-bottom: 3px solid #2563eb;
+    margin-bottom: 24px;
+}
+.rel-logo-row { display: flex; align-items: center; gap: 10px; }
+.rel-logo-row .brand { font-size: 19px; font-weight: 800; color: #1a2333; }
+.rel-logo-row .tagline { font-size: 8px; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; }
+.rel-title-block { text-align: right; }
+.rel-title-block h2 { font-size: 15px; font-weight: 700; color: #1a2333; }
+.rel-title-block p { font-size: 11px; color: #94a3b8; }
+
+.rel-sec { margin-bottom: 20px; }
+.rel-sec h3 {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #2563eb;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #dbeafe;
+}
+.rel-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 24px;
+}
+.rel-field { display: flex; flex-direction: column; gap: 2px; }
+.rel-field .rl { font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+.rel-field .rv { font-size: 13px; color: #1e293b; }
+.rel-full { grid-column: 1 / -1; }
+.rel-full .rv { white-space: pre-line; line-height: 1.6; }
+
+.rel-footer {
+    margin-top: 30px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+}
+.rel-footer p { font-size: 10px; color: #94a3b8; }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: #1e293b;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 2000;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(.175,.885,.32,1.275);
+    pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.ok  { background: #16a34a; }
+.toast.err { background: #dc2626; }
+
+/* ============================================================
+   CONFIGURAÇÕES
+   ============================================================ */
+.cfg-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid #f1f5f9;
+    gap: 16px;
+}
+.cfg-row:last-child { border-bottom: none; }
+.cfg-lbl { font-size: 14px; font-weight: 600; color: #374151; }
+.cfg-desc { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+/* ============================================================
+   MOBILE HEADER (hambúrguer)
+   ============================================================ */
+.mobile-topbar {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    background: #1a2333;
+    padding: 14px 16px;
+    margin: -26px -28px 22px;
+}
+.mobile-topbar button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 6px;
+}
+.mobile-topbar span {
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 1px;
+}
+
+/* Overlay escuro por trás da sidebar no mobile */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 450;
+}
+.sidebar-overlay.show { display: block; }
+
+/* ============================================================
+   RESPONSIVO
+   ============================================================ */
+@media (max-width: 1024px) {
+    .summary-cards { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main-content { margin-left: 0; padding: 0 16px 24px; }
+    .mobile-topbar { display: flex; }
+    .g2, .g3, .g4 { grid-template-columns: 1fr; }
+    .summary-cards { grid-template-columns: 1fr 1fr; }
+    .visita-card { flex-direction: column; align-items: flex-start; }
+    .vc-actions { width: 100%; }
+    .rel-grid { grid-template-columns: 1fr; }
+    .rel-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .rel-title-block { text-align: left; }
+}
+@media (max-width: 480px) {
+    .summary-cards { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   IMPRESSÃO / PDF
+   ============================================================ */
+@media print {
+    .sidebar, .main-content, .toast, .mobile-topbar, .sidebar-overlay { display: none !important; }
+    .modal-overlay {
+        position: static !important;
+        background: none !important;
+        padding: 0 !important;
+        display: block !important;
+        overflow: visible !important;
+    }
+    .modal-box { box-shadow: none !important; border-radius: 0 !important; max-width: 100% !important; }
+    .modal-head, .modal-foot { display: none !important; }
+    .modal-body { padding: 24px !important; }
+}
+    </style>
+</head>
+<body>
+
+<!-- Overlay escuro ao abrir sidebar no mobile -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="fecharSidebar()"></div>
+
+<!-- ============================================================
+     SIDEBAR
+     ============================================================ -->
+<aside class="sidebar" id="sidebar">
+
+    <!-- Logo -->
+    <div class="sidebar-logo">
+        <div class="logo-row">
+            <div class="logo-icon-box">
+                <i class="fas fa-earth-americas"></i>
+            </div>
+            <div class="logo-texts">
+                <div class="brand">TECWISE</div>
+                <div class="tagline">INNOVACIÓN DIGITAL</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegação -->
+    <nav class="sidebar-nav">
+        <button class="nav-item active" onclick="navegar('inicio', this)">
+            <i class="fas fa-home"></i><span>Início</span>
+        </button>
+        <button class="nav-item" onclick="navegar('nova-visita', this)">
+            <i class="fas fa-clipboard-list"></i><span>Nova Visita</span>
+        </button>
+        <button class="nav-item" onclick="navegar('historico', this)">
+            <i class="fas fa-folder-open"></i><span>Histórico</span>
+        </button>
+        <button class="nav-item" onclick="navegar('sobre', this)">
+            <i class="fas fa-info-circle"></i><span>Sobre</span>
+        </button>
+        <button class="nav-item" onclick="navegar('configuracoes', this)">
+            <i class="fas fa-cog"></i><span>Configurações</span>
+        </button>
+    </nav>
+
+    <!-- Rodapé -->
+    <div class="sidebar-footer">
+        <button class="nav-item" onclick="confirmarSaida()">
+            <i class="fas fa-sign-out-alt"></i><span>Sair</span>
+        </button>
+    </div>
+</aside>
+
+<!-- ============================================================
+     CONTEÚDO PRINCIPAL
+     ============================================================ -->
+<main class="main-content">
+
+    <!-- Barra mobile com hambúrguer -->
+    <div class="mobile-topbar">
+        <button onclick="abrirSidebar()"><i class="fas fa-bars"></i></button>
+        <span>TECWISE</span>
+    </div>
+
+    <!-- Cards de Resumo (sempre visíveis) -->
+    <div class="summary-cards">
+        <div class="summary-card">
+            <div class="card-icon blue"><i class="fas fa-map-marker-alt"></i></div>
+            <div class="card-info">
+                <div class="lbl">Total de Visitas</div>
+                <div class="val" id="c-total">0</div>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="card-icon green"><i class="fas fa-calendar-check"></i></div>
+            <div class="card-info">
+                <div class="lbl">Visitas este Mês</div>
+                <div class="val" id="c-mes">0</div>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="card-icon purple"><i class="fas fa-building"></i></div>
+            <div class="card-info">
+                <div class="lbl">Clientes Ativos</div>
+                <div class="val" id="c-ativos">0</div>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="card-icon orange"><i class="fas fa-fire"></i></div>
+            <div class="card-info">
+                <div class="lbl">Oportunidades</div>
+                <div class="val" id="c-oport">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================
+         PÁGINA: INÍCIO
+         ====================================================== -->
+    <div class="page-section active" id="page-inicio">
+        <div class="page-header">
+            <h1>Dashboard</h1>
+            <p>Bem-vindo ao sistema de visitas técnicas da Tecwise</p>
+        </div>
+        <div class="form-section">
+            <div class="section-header">
+                <div class="sec-icon"><i class="fas fa-chart-bar"></i></div>
+                <h3>Visão Geral</h3>
+            </div>
+            <div class="section-body">
+                <p style="font-size:14px;color:#475569;line-height:1.75;margin-bottom:18px;">
+                    Use o menu lateral para navegar. Registre visitas técnicas, consulte o histórico
+                    e gere relatórios profissionais em PDF com um clique.
+                </p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="navParaNova()">
+                        <i class="fas fa-plus"></i> Nova Visita
+                    </button>
+                    <button class="btn btn-secondary" onclick="navParaHistorico()">
+                        <i class="fas fa-list"></i> Ver Histórico
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================
+         PÁGINA: NOVA VISITA
+         ====================================================== -->
+    <div class="page-section" id="page-nova-visita">
+        <div class="page-header">
+            <h1 id="form-titulo">Nova Visita Técnica</h1>
+            <p>Preencha os dados completos da visita</p>
+        </div>
+
+        <form id="form-visita" onsubmit="return false;">
+
+            <!-- SEÇÃO 1: Identificação -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="sec-icon"><i class="fas fa-id-card"></i></div>
+                    <h3>Identificação da Visita</h3>
+                </div>
+                <div class="section-body">
+                    <div class="g4 mb14">
+                        <div class="fg">
+                            <label>Data da Visita *</label>
+                            <input type="date" id="f-data" required>
+                        </div>
+                        <div class="fg">
+                            <label>Horário de Início</label>
+                            <input type="time" id="f-hora-ini">
+                        </div>
+                        <div class="fg">
+                            <label>Horário de Fim</label>
+                            <input type="time" id="f-hora-fim">
+                        </div>
+                        <div class="fg">
+                            <label>Segmento de Mercado</label>
+                            <select id="f-segmento">
+                                <option value="">Selecione...</option>
+                                <option>Tecnologia</option>
+                                <option>Saúde</option>
+                                <option>Educação</option>
+                                <option>Varejo</option>
+                                <option>Indústria</option>
+                                <option>Agronegócio</option>
+                                <option>Financeiro</option>
+                                <option>Logística</option>
+                                <option>Outro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="g2">
+                        <div class="fg">
+                            <label>Nome do Representante *</label>
+                            <input type="text" id="f-rep" placeholder="Seu nome completo" required>
+                        </div>
+                        <div class="fg">
+                            <label>Empresa Visitada *</label>
+                            <input type="text" id="f-empresa" placeholder="Nome da empresa" required>
+                        </div>
+                        <div class="fg">
+                            <label>CNPJ</label>
+                            <input type="text" id="f-cnpj" placeholder="00.000.000/0000-00" maxlength="18">
+                        </div>
+                        <div class="fg">
+                            <label>Nome e Cargo do(s) Contato(s)</label>
+                            <input type="text" id="f-contato" placeholder="Ex: João Silva — Diretor de TI">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 2: Objetivo -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="sec-icon"><i class="fas fa-bullseye"></i></div>
+                    <h3>Objetivo da Visita</h3>
+                </div>
+                <div class="section-body">
+                    <div class="g2">
+                        <div class="fg">
+                            <label>Tipo de Visita</label>
+                            <select id="f-tipo">
+                                <option value="">Selecione...</option>
+                                <option>Prospecção</option>
+                                <option>Apresentação</option>
+                                <option>Negociação</option>
+                                <option>Pós-venda</option>
+                                <option>Outro</option>
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label>O que se esperava alcançar</label>
+                            <textarea id="f-objetivo" placeholder="Descreva o objetivo principal da visita..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 3: Resumo da Reunião -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="sec-icon"><i class="fas fa-file-alt"></i></div>
+                    <h3>Resumo da Reunião</h3>
+                </div>
+                <div class="section-body">
+                    <div class="g2">
+                        <div class="fg">
+                            <label>Pauta Discutida</label>
+                            <textarea id="f-pauta" placeholder="O que foi discutido na reunião..."></textarea>
+                        </div>
+                        <div class="fg">
+                            <label>Principais Pontos Levantados</label>
+                            <textarea id="f-pontos" placeholder="Pontos mais importantes da conversa..."></textarea>
+                        </div>
+                        <div class="fg">
+                            <label>Objeções Apresentadas</label>
+                            <textarea id="f-objecoes" placeholder="Dúvidas ou objeções levantadas pelo cliente..."></textarea>
+                        </div>
+                        <div class="fg">
+                            <label>Interesse Demonstrado</label>
+                            <textarea id="f-interesse-desc" placeholder="Como o cliente demonstrou interesse..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 4: Status Comercial -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="sec-icon"><i class="fas fa-briefcase"></i></div>
+                    <h3>Status Comercial</h3>
+                </div>
+                <div class="section-body">
+                    <div class="g2 mb14">
+                        <div class="fg">
+                            <label>Situação do Cliente</label>
+                            <select id="f-situacao">
+                                <option value="">Selecione...</option>
+                                <option>Ativo</option>
+                                <option>Prospect</option>
+                                <option>Em negociação</option>
+                                <option>Inativo</option>
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label>Status da Proposta</label>
+                            <select id="f-status-prop">
+                                <option value="">Selecione...</option>
+                                <option>Apresentada</option>
+                                <option>Pendente</option>
+                                <option>Não aplicável</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="g2">
+                        <div class="fg">
+                            <label>Produtos / Serviços Apresentados</label>
+                            <textarea id="f-produtos" placeholder="Liste os produtos ou serviços apresentados..."></textarea>
+                        </div>
+                        <div class="fg">
+                            <label>Valor Estimado da Oportunidade</label>
+                            <input type="text" id="f-valor" placeholder="R$ 0,00">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 5: Próximos Passos -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="sec-icon"><i class="fas fa-sync-alt"></i></div>
+                    <h3>Próximos Passos</h3>
+                </div>
+                <div class="section-body">
+                    <div class="g2 mb14">
+                        <div class="fg">
+                            <label>Ações Acordadas</label>
+                            <textarea id="f-acoes" placeholder="O que foi acordado fazer após a reunião..."></textarea>
+                        </div>
+                        <div class="fg">
+                            <label>Responsável</label>
+                            <input type="text" id="f-responsavel" placeholder="Quem ficou responsável pelas ações">
+                        </div>
+                    </div>
+                    <div class="g2">
+                        <div class="fg">
+                            <label>Prazo para Follow-up</label>
+                            <input type="date" id="f-followup">
+                        </div>
+                        <div class="fg">
+                            <label>Data do Próximo Contato</label>
+                            <input type="date" id="f-proximo">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 6: Avaliação do Potencial -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="sec-icon"><i class="fas fa-chart-line"></i></div>
+                    <h3>Avaliação do Potencial</h3>
+                </div>
+                <div class="section-body">
+                    <div class="fg mb14">
+                        <label>Nível de Interesse</label>
+                        <div class="interesse-row">
+                            <button type="button" class="btn-int" id="bi-frio"   onclick="selecionarInteresse('Frio')">🔵 Frio</button>
+                            <button type="button" class="btn-int" id="bi-morno"  onclick="selecionarInteresse('Morno')">🟡 Morno</button>
+                            <button type="button" class="btn-int" id="bi-quente" onclick="selecionarInteresse('Quente')">🔴 Quente</button>
+                        </div>
+                        <input type="hidden" id="f-interesse" value="">
+                    </div>
+                    <div class="g2">
+                        <div class="fg">
+                            <label>Probabilidade de Fechamento</label>
+                            <div class="slider-wrap">
+                                <div class="slider-top">
+                                    <span>0%</span>
+                                    <span class="sv" id="prob-label">50%</span>
+                                    <span>100%</span>
+                                </div>
+                                <input type="range" id="f-prob" min="0" max="100" value="50"
+                                    oninput="document.getElementById('prob-label').textContent = this.value + '%'">
+                            </div>
+                        </div>
+                        <div class="fg">
+                            <label>Prazo Estimado de Decisão</label>
+                            <select id="f-prazo-dec">
+                                <option value="">Selecione...</option>
+                                <option>Imediato</option>
+                                <option>30 dias</option>
+                                <option>60 dias</option>
+                                <option>90 dias</option>
+                                <option>+90 dias</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO 7: Observações -->
+            <div class="form-section">
+                <div class="section-header">
+                    <div class="sec-icon"><i class="fas fa-paperclip"></i></div>
+                    <h3>Observações Adicionais</h3>
+                </div>
+                <div class="section-body">
+                    <div class="g2">
+                        <div class="fg">
+                            <label>Concorrência Mencionada</label>
+                            <textarea id="f-concorr" placeholder="Concorrentes citados pelo cliente..."></textarea>
+                        </div>
+                        <div class="fg">
+                            <label>Documentos Entregues / Recebidos</label>
+                            <textarea id="f-docs" placeholder="Liste os documentos trocados..."></textarea>
+                        </div>
+                        <div class="fg gcol2">
+                            <label>Materiais Enviados</label>
+                            <textarea id="f-materiais" placeholder="Propostas, apresentações, catálogos enviados..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões de ação -->
+            <div class="form-section">
+                <div class="action-row">
+                    <button type="button" class="btn btn-primary" onclick="salvarVisita()">
+                        <i class="fas fa-save"></i> Salvar Visita
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="gerarRelatorio()">
+                        <i class="fas fa-file-pdf"></i> Gerar Relatório PDF
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="limparForm()">
+                        <i class="fas fa-trash-alt"></i> Limpar Formulário
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- ======================================================
+         PÁGINA: HISTÓRICO
+         ====================================================== -->
+    <div class="page-section" id="page-historico">
+        <div class="page-header">
+            <h1>Histórico de Visitas</h1>
+            <p>Todas as visitas registradas</p>
+        </div>
+        <div class="search-wrap">
+            <i class="fas fa-search"></i>
+            <input type="text" id="busca" placeholder="Buscar por empresa ou data (AAAA-MM-DD)..."
+                   oninput="renderHistorico(this.value)">
+        </div>
+        <div id="lista-visitas"></div>
+    </div>
+
+    <!-- ======================================================
+         PÁGINA: SOBRE
+         ====================================================== -->
+    <div class="page-section" id="page-sobre">
+        <div class="page-header"><h1>Sobre o Sistema</h1></div>
+        <div class="info-card">
+            <h2>Sistema de Relatórios de Visitas Técnicas</h2>
+            <p>
+                Desenvolvido exclusivamente para a equipe comercial da <strong>Tecwise</strong>,
+                este sistema permite registrar visitas, acompanhar oportunidades e gerar
+                relatórios profissionais em PDF sem nenhuma instalação.
+            </p>
+            <p>
+                Todos os dados ficam armazenados localmente no seu navegador via
+                <strong>localStorage</strong> — sem servidor, sem internet obrigatória e
+                sem custo de hospedagem.
+            </p>
+            <p style="color:#94a3b8;font-size:12px;margin-top:20px;">
+                Versão 1.0 &nbsp;·&nbsp; Tecwise © 2025
+            </p>
+        </div>
+    </div>
+
+    <!-- ======================================================
+         PÁGINA: CONFIGURAÇÕES
+         ====================================================== -->
+    <div class="page-section" id="page-configuracoes">
+        <div class="page-header"><h1>Configurações</h1></div>
+        <div class="form-section" style="max-width:680px;">
+            <div class="section-body">
+                <div class="cfg-row">
+                    <div>
+                        <div class="cfg-lbl">Nome padrão do representante</div>
+                        <div class="cfg-desc">Preenchido automaticamente em novas visitas</div>
+                    </div>
+                    <input type="text" id="cfg-nome" placeholder="Seu nome"
+                           style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-family:Inter,sans-serif;font-size:13px;width:220px;outline:none;"
+                           onchange="salvarConfig()" onfocus="this.style.borderColor='#2563eb'" onblur="this.style.borderColor='#e2e8f0'">
+                </div>
+                <div class="cfg-row">
+                    <div>
+                        <div class="cfg-lbl">Exportar todos os dados</div>
+                        <div class="cfg-desc">Baixa um arquivo JSON com todas as visitas salvas</div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="exportarDados()">
+                        <i class="fas fa-download"></i> Exportar
+                    </button>
+                </div>
+                <div class="cfg-row">
+                    <div>
+                        <div class="cfg-lbl" style="color:#dc2626;">Apagar todos os dados</div>
+                        <div class="cfg-desc">Remove permanentemente todas as visitas salvas</div>
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="confirmarLimparTudo()">
+                        <i class="fas fa-trash"></i> Apagar Tudo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main><!-- fim main-content -->
+
+<!-- ============================================================
+     MODAL DO RELATÓRIO
+     ============================================================ -->
+<div class="modal-overlay" id="modal-rel" onclick="fecharModalFora(event)">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h2><i class="fas fa-file-alt" style="color:#2563eb;margin-right:8px;"></i>Relatório de Visita Técnica</h2>
+            <button class="btn-close" onclick="fecharModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div id="rel-conteudo" class="relatorio"></div>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Imprimir / Salvar PDF
+            </button>
+            <button class="btn btn-secondary" onclick="fecharModal()">
+                <i class="fas fa-times"></i> Fechar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast de notificação -->
+<div class="toast" id="toast">
+    <i class="fas fa-check-circle" id="toast-ico"></i>
+    <span id="toast-msg">Salvo!</span>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+// =========================================================
+// VARIÁVEIS GLOBAIS
+// =========================================================
+let visitaEmEdicao = null; // null = nova visita; string = ID sendo editado
+
+// =========================================================
+// INICIALIZAÇÃO — executa quando a página carrega
+// =========================================================
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Define data de hoje como padrão
+    document.getElementById('f-data').value = hoje();
+
+    // Carrega o nome padrão das configurações salvas
+    const cfg = lerConfig();
+    if (cfg.nome) {
+        document.getElementById('f-rep').value = cfg.nome;
+        document.getElementById('cfg-nome').value = cfg.nome;
+    }
+
+    // Ativa as máscaras nos campos específicos
+    document.getElementById('f-cnpj').addEventListener('input', mascaraCNPJ);
+    document.getElementById('f-valor').addEventListener('input', mascaraMoeda);
+
+    // Atualiza os 4 cards de resumo
+    atualizarCards();
+});
+
+// =========================================================
+// UTILITÁRIOS
+// =========================================================
+
+// Retorna a data de hoje no formato AAAA-MM-DD
+function hoje() {
+    return new Date().toISOString().split('T')[0];
+}
+
+// Converte AAAA-MM-DD para DD/MM/AAAA
+function fmtData(s) {
+    if (!s) return '—';
+    return s.split('-').reverse().join('/');
+}
+
+// Lê todas as visitas do localStorage
+function lerVisitas() {
+    return JSON.parse(localStorage.getItem('tw-visitas') || '[]');
+}
+
+// Salva o array de visitas no localStorage
+function gravarVisitas(arr) {
+    localStorage.setItem('tw-visitas', JSON.stringify(arr));
+}
+
+// Lê as configurações salvas
+function lerConfig() {
+    return JSON.parse(localStorage.getItem('tw-config') || '{}');
+}
+
+// =========================================================
+// NAVEGAÇÃO ENTRE PÁGINAS
+// =========================================================
+function navegar(pagina, elClicado) {
+    // Esconde todas as páginas
+    document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+    // Mostra a página escolhida
+    document.getElementById('page-' + pagina).classList.add('active');
+
+    // Atualiza o item ativo no menu lateral
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (elClicado) elClicado.classList.add('active');
+
+    // Ações específicas por página
+    if (pagina === 'historico') renderHistorico();
+    if (pagina === 'configuracoes') {
+        document.getElementById('cfg-nome').value = lerConfig().nome || '';
+    }
+
+    fecharSidebar(); // fecha sidebar no mobile ao navegar
+    window.scrollTo(0, 0);
+}
+
+// Atalhos usados pelos botões do dashboard
+function navParaNova() {
+    const btns = document.querySelectorAll('.nav-item');
+    navegar('nova-visita', btns[1]);
+}
+function navParaHistorico() {
+    const btns = document.querySelectorAll('.nav-item');
+    navegar('historico', btns[2]);
+}
+
+// =========================================================
+// SIDEBAR MOBILE
+// =========================================================
+function abrirSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebar-overlay').classList.add('show');
+}
+function fecharSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('show');
+}
+
+// =========================================================
+// MÁSCARA DE CNPJ — formata: 00.000.000/0000-00
+// =========================================================
+function mascaraCNPJ(e) {
+    let v = e.target.value.replace(/\D/g, ''); // remove não-dígitos
+    v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+    v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+    v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
+    v = v.replace(/(\d{4})(\d)/, '$1-$2');
+    e.target.value = v;
+}
+
+// =========================================================
+// MÁSCARA DE MOEDA — formata: R$ 1.234,56
+// =========================================================
+function mascaraMoeda(e) {
+    let v = e.target.value.replace(/\D/g, '');
+    if (!v) { e.target.value = ''; return; }
+    v = (parseInt(v, 10) / 100).toFixed(2);
+    v = v.replace('.', ',');
+    v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+    e.target.value = 'R$ ' + v;
+}
+
+// =========================================================
+// SELEÇÃO DE NÍVEL DE INTERESSE
+// =========================================================
+function selecionarInteresse(nivel) {
+    document.getElementById('f-interesse').value = nivel;
+    // Remove seleção anterior de todos os botões
+    document.getElementById('bi-frio').className   = 'btn-int';
+    document.getElementById('bi-morno').className  = 'btn-int';
+    document.getElementById('bi-quente').className = 'btn-int';
+    // Aplica classe de seleção no botão escolhido
+    const map = { Frio: 'sel-frio', Morno: 'sel-morno', Quente: 'sel-quente' };
+    document.getElementById('bi-' + nivel.toLowerCase()).classList.add(map[nivel]);
+}
+
+// =========================================================
+// COLETAR TODOS OS DADOS DO FORMULÁRIO
+// =========================================================
+function coletarForm() {
+    return {
+        id:           visitaEmEdicao || String(Date.now()),
+        criado:       new Date().toISOString(),
+        // Identificação
+        data:         document.getElementById('f-data').value,
+        horaIni:      document.getElementById('f-hora-ini').value,
+        horaFim:      document.getElementById('f-hora-fim').value,
+        rep:          document.getElementById('f-rep').value.trim(),
+        empresa:      document.getElementById('f-empresa').value.trim(),
+        cnpj:         document.getElementById('f-cnpj').value,
+        segmento:     document.getElementById('f-segmento').value,
+        contato:      document.getElementById('f-contato').value,
+        // Objetivo
+        tipo:         document.getElementById('f-tipo').value,
+        objetivo:     document.getElementById('f-objetivo').value,
+        // Resumo
+        pauta:        document.getElementById('f-pauta').value,
+        pontos:       document.getElementById('f-pontos').value,
+        objecoes:     document.getElementById('f-objecoes').value,
+        interDesc:    document.getElementById('f-interesse-desc').value,
+        // Status comercial
+        situacao:     document.getElementById('f-situacao').value,
+        produtos:     document.getElementById('f-produtos').value,
+        statusProp:   document.getElementById('f-status-prop').value,
+        valor:        document.getElementById('f-valor').value,
+        // Próximos passos
+        acoes:        document.getElementById('f-acoes').value,
+        responsavel:  document.getElementById('f-responsavel').value,
+        followup:     document.getElementById('f-followup').value,
+        proximo:      document.getElementById('f-proximo').value,
+        // Avaliação
+        interesse:    document.getElementById('f-interesse').value,
+        prob:         document.getElementById('f-prob').value,
+        prazoDecisao: document.getElementById('f-prazo-dec').value,
+        // Observações
+        concorr:      document.getElementById('f-concorr').value,
+        docs:         document.getElementById('f-docs').value,
+        materiais:    document.getElementById('f-materiais').value,
+    };
+}
+
+// =========================================================
+// SALVAR VISITA NO LOCALSTORAGE
+// =========================================================
+function salvarVisita() {
+    if (!document.getElementById('f-empresa').value.trim()) {
+        toast('Preencha o nome da empresa!', 'err');
+        return;
+    }
+    if (!document.getElementById('f-data').value) {
+        toast('Preencha a data da visita!', 'err');
+        return;
+    }
+
+    const dados = coletarForm();
+    let visitas = lerVisitas();
+
+    if (visitaEmEdicao) {
+        // Substitui a visita existente
+        const idx = visitas.findIndex(v => v.id === visitaEmEdicao);
+        if (idx !== -1) visitas[idx] = dados;
+        else visitas.push(dados);
+    } else {
+        visitas.push(dados);
+    }
+
+    gravarVisitas(visitas);
+
+    // Salva o nome do representante nas configs para autocompletar depois
+    const cfg = lerConfig();
+    cfg.nome = dados.rep;
+    localStorage.setItem('tw-config', JSON.stringify(cfg));
+
+    atualizarCards();
+    visitaEmEdicao = null;
+    document.getElementById('form-titulo').textContent = 'Nova Visita Técnica';
+    toast('Visita salva com sucesso!', 'ok');
+}
+
+// =========================================================
+// ATUALIZAR OS 4 CARDS DE RESUMO
+// =========================================================
+function atualizarCards() {
+    const visitas = lerVisitas();
+    const agora = new Date();
+
+    document.getElementById('c-total').textContent = visitas.length;
+
+    // Visitas do mês atual
+    const mes = visitas.filter(v => {
+        if (!v.data) return false;
+        const d = new Date(v.data + 'T12:00:00'); // meio-dia evita bug de fuso
+        return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear();
+    });
+    document.getElementById('c-mes').textContent = mes.length;
+
+    // Clientes com situação "Ativo"
+    document.getElementById('c-ativos').textContent =
+        visitas.filter(v => v.situacao === 'Ativo').length;
+
+    // Oportunidades = Quente ou Morno
+    document.getElementById('c-oport').textContent =
+        visitas.filter(v => v.interesse === 'Quente' || v.interesse === 'Morno').length;
+}
+
+// =========================================================
+// RENDERIZAR HISTÓRICO DE VISITAS
+// =========================================================
+function renderHistorico(filtro) {
+    let visitas = lerVisitas();
+
+    // Filtra por empresa ou data se houver texto na busca
+    if (filtro && filtro.trim()) {
+        const f = filtro.toLowerCase().trim();
+        visitas = visitas.filter(v =>
+            (v.empresa || '').toLowerCase().includes(f) ||
+            (v.data || '').includes(f)
+        );
+    }
+
+    const el = document.getElementById('lista-visitas');
+
+    if (visitas.length === 0) {
+        el.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-folder-open"></i>
+                <p>${filtro ? 'Nenhuma visita encontrada para essa busca.' : 'Nenhuma visita registrada ainda. Clique em <strong>Nova Visita</strong> para começar.'}</p>
+            </div>`;
+        return;
+    }
+
+    // Ordena da mais recente para a mais antiga
+    visitas.sort((a, b) => new Date(b.criado || 0) - new Date(a.criado || 0));
+
+    const mapaEmoji = { Frio: '🔵', Morno: '🟡', Quente: '🔴' };
+    const mapaBadge = { Frio: 'badge-frio', Morno: 'badge-morno', Quente: 'badge-quente' };
+
+    el.innerHTML = visitas.map(v => {
+        const badge = mapaBadge[v.interesse] || 'badge-neutro';
+        const emoji = mapaEmoji[v.interesse] || '⚪';
+        return `
+        <div class="visita-card">
+            <div class="vc-info">
+                <div class="vc-empresa">${v.empresa || '(sem empresa)'}</div>
+                <div class="vc-meta">
+                    <span><i class="fas fa-calendar-alt"></i> ${fmtData(v.data)}</span>
+                    <span><i class="fas fa-user"></i> ${v.rep || '—'}</span>
+                    <span><i class="fas fa-tag"></i> ${v.tipo || '—'}</span>
+                </div>
+                <div class="vc-badges">
+                    <span class="badge ${badge}">${emoji} ${v.interesse || 'Sem avaliação'}</span>
+                    ${v.situacao ? `<span class="badge badge-neutro">${v.situacao}</span>` : ''}
+                    ${v.prob ? `<span class="badge badge-neutro"><i class="fas fa-percent"></i> ${v.prob}%</span>` : ''}
+                </div>
+            </div>
+            <div class="vc-actions">
+                <button class="btn btn-primary btn-sm" onclick="abrirRelatorio('${v.id}')">
+                    <i class="fas fa-eye"></i> Ver
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="editarVisita('${v.id}')">
+                    <i class="fas fa-edit"></i> Editar
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="excluirVisita('${v.id}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// =========================================================
+// EXCLUIR VISITA
+// =========================================================
+function excluirVisita(id) {
+    if (!confirm('Excluir esta visita permanentemente?')) return;
+    let visitas = lerVisitas().filter(v => v.id !== id);
+    gravarVisitas(visitas);
+    atualizarCards();
+    renderHistorico(document.getElementById('busca').value);
+    toast('Visita excluída.', 'err');
+}
+
+// =========================================================
+// EDITAR VISITA — carrega os dados no formulário
+// =========================================================
+function editarVisita(id) {
+    const v = lerVisitas().find(x => x.id === id);
+    if (!v) return;
+
+    visitaEmEdicao = id;
+
+    // Preenche cada campo com os dados salvos
+    document.getElementById('f-data').value        = v.data || '';
+    document.getElementById('f-hora-ini').value    = v.horaIni || '';
+    document.getElementById('f-hora-fim').value    = v.horaFim || '';
+    document.getElementById('f-rep').value         = v.rep || '';
+    document.getElementById('f-empresa').value     = v.empresa || '';
+    document.getElementById('f-cnpj').value        = v.cnpj || '';
+    document.getElementById('f-segmento').value    = v.segmento || '';
+    document.getElementById('f-contato').value     = v.contato || '';
+    document.getElementById('f-tipo').value        = v.tipo || '';
+    document.getElementById('f-objetivo').value    = v.objetivo || '';
+    document.getElementById('f-pauta').value       = v.pauta || '';
+    document.getElementById('f-pontos').value      = v.pontos || '';
+    document.getElementById('f-objecoes').value    = v.objecoes || '';
+    document.getElementById('f-interesse-desc').value = v.interDesc || '';
+    document.getElementById('f-situacao').value    = v.situacao || '';
+    document.getElementById('f-produtos').value    = v.produtos || '';
+    document.getElementById('f-status-prop').value = v.statusProp || '';
+    document.getElementById('f-valor').value       = v.valor || '';
+    document.getElementById('f-acoes').value       = v.acoes || '';
+    document.getElementById('f-responsavel').value = v.responsavel || '';
+    document.getElementById('f-followup').value    = v.followup || '';
+    document.getElementById('f-proximo').value     = v.proximo || '';
+    document.getElementById('f-prob').value        = v.prob || 50;
+    document.getElementById('prob-label').textContent = (v.prob || 50) + '%';
+    document.getElementById('f-prazo-dec').value   = v.prazoDecisao || '';
+    document.getElementById('f-concorr').value     = v.concorr || '';
+    document.getElementById('f-docs').value        = v.docs || '';
+    document.getElementById('f-materiais').value   = v.materiais || '';
+
+    // Restaura o nível de interesse selecionado
+    if (v.interesse) selecionarInteresse(v.interesse);
+
+    // Navega para o formulário
+    document.getElementById('form-titulo').textContent = 'Editar Visita — ' + v.empresa;
+    const btns = document.querySelectorAll('.nav-item');
+    navegar('nova-visita', btns[1]);
+    toast('Visita carregada para edição.', 'ok');
+}
+
+// =========================================================
+// LIMPAR FORMULÁRIO
+// =========================================================
+function limparForm() {
+    if (!confirm('Limpar todos os campos?')) return;
+    document.getElementById('form-visita').reset();
+    document.getElementById('f-data').value = hoje();
+
+    // Reseta botões de interesse
+    ['bi-frio','bi-morno','bi-quente'].forEach(id =>
+        document.getElementById(id).className = 'btn-int'
+    );
+    document.getElementById('f-interesse').value = '';
+    document.getElementById('prob-label').textContent = '50%';
+    document.getElementById('form-titulo').textContent = 'Nova Visita Técnica';
+
+    visitaEmEdicao = null;
+
+    // Recoloca o nome padrão
+    const cfg = lerConfig();
+    if (cfg.nome) document.getElementById('f-rep').value = cfg.nome;
+
+    toast('Formulário limpo.');
+}
+
+// =========================================================
+// GERAR RELATÓRIO — abre o modal com dados do formulário
+// =========================================================
+function gerarRelatorio() {
+    const dados = coletarForm();
+    if (!dados.empresa) {
+        toast('Preencha pelo menos o nome da empresa!', 'err');
+        return;
+    }
+    document.getElementById('rel-conteudo').innerHTML = montarRelatorio(dados);
+    document.getElementById('modal-rel').classList.add('open');
+}
+
+// Abre o relatório de uma visita já salva
+function abrirRelatorio(id) {
+    const v = lerVisitas().find(x => x.id === id);
+    if (!v) return;
+    document.getElementById('rel-conteudo').innerHTML = montarRelatorio(v);
+    document.getElementById('modal-rel').classList.add('open');
+}
+
+// =========================================================
+// MONTAR HTML DO RELATÓRIO
+// =========================================================
+function montarRelatorio(v) {
+    const agora = new Date().toLocaleString('pt-BR');
+
+    const badgeCSS = {
+        Frio:   'background:#dbeafe;color:#1d4ed8;',
+        Morno:  'background:#fef3c7;color:#b45309;',
+        Quente: 'background:#fee2e2;color:#b91c1c;'
+    }[v.interesse] || 'background:#f1f5f9;color:#64748b;';
+
+    const emoji = { Frio: '🔵', Morno: '🟡', Quente: '🔴' }[v.interesse] || '';
+
+    // Helpers para gerar campos — retorna string vazia se valor ausente
+    const C = (label, val) => !val ? '' : `
+        <div class="rel-field">
+            <span class="rl">${label}</span>
+            <span class="rv">${val}</span>
+        </div>`;
+
+    const CF = (label, val) => !val ? '' : `
+        <div class="rel-field rel-full">
+            <span class="rl">${label}</span>
+            <span class="rv">${val}</span>
+        </div>`;
+
+    const horario = [v.horaIni, v.horaFim].filter(Boolean).join(' – ') || '';
+
+    return `
+    <div class="rel-header">
+        <div class="rel-logo-row">
+            <div style="width:42px;height:42px;background:#2563eb;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;flex-shrink:0;">
+                <i class="fas fa-earth-americas"></i>
+            </div>
+            <div>
+                <div class="brand">TECWISE</div>
+                <div class="tagline">INNOVACIÓN DIGITAL</div>
+            </div>
+        </div>
+        <div class="rel-title-block">
+            <h2>RELATÓRIO DE VISITA TÉCNICA</h2>
+            <p>Documento confidencial</p>
+        </div>
+    </div>
+
+    <div class="rel-sec">
+        <h3>Identificação da Visita</h3>
+        <div class="rel-grid">
+            ${C('Data', fmtData(v.data))}
+            ${C('Horário', horario)}
+            ${C('Representante', v.rep)}
+            ${C('Empresa Visitada', v.empresa)}
+            ${C('CNPJ', v.cnpj)}
+            ${C('Segmento', v.segmento)}
+            ${C('Tipo de Visita', v.tipo)}
+            ${C('Contato(s)', v.contato)}
+        </div>
+    </div>
+
+    ${v.objetivo ? `
+    <div class="rel-sec">
+        <h3>Objetivo da Visita</h3>
+        <div class="rel-grid">${CF('O que se esperava alcançar', v.objetivo)}</div>
+    </div>` : ''}
+
+    ${(v.pauta || v.pontos || v.objecoes || v.interDesc) ? `
+    <div class="rel-sec">
+        <h3>Resumo da Reunião</h3>
+        <div class="rel-grid">
+            ${CF('Pauta Discutida', v.pauta)}
+            ${CF('Principais Pontos', v.pontos)}
+            ${CF('Objeções Apresentadas', v.objecoes)}
+            ${CF('Interesse Demonstrado', v.interDesc)}
+        </div>
+    </div>` : ''}
+
+    <div class="rel-sec">
+        <h3>Status Comercial</h3>
+        <div class="rel-grid">
+            ${C('Situação do Cliente', v.situacao)}
+            ${C('Status da Proposta', v.statusProp)}
+            ${C('Valor Estimado', v.valor)}
+            ${CF('Produtos / Serviços Apresentados', v.produtos)}
+        </div>
+    </div>
+
+    <div class="rel-sec">
+        <h3>Avaliação do Potencial</h3>
+        <div class="rel-grid">
+            <div class="rel-field">
+                <span class="rl">Nível de Interesse</span>
+                <span class="rv">
+                    ${v.interesse
+                        ? `<span style="padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;${badgeCSS}">${emoji} ${v.interesse}</span>`
+                        : '—'}
+                </span>
+            </div>
+            ${C('Probabilidade de Fechamento', v.prob ? v.prob + '%' : '')}
+            ${C('Prazo Estimado de Decisão', v.prazoDecisao)}
+        </div>
+    </div>
+
+    ${(v.acoes || v.responsavel || v.followup || v.proximo) ? `
+    <div class="rel-sec">
+        <h3>Próximos Passos</h3>
+        <div class="rel-grid">
+            ${CF('Ações Acordadas', v.acoes)}
+            ${C('Responsável', v.responsavel)}
+            ${C('Prazo para Follow-up', fmtData(v.followup))}
+            ${C('Data do Próximo Contato', fmtData(v.proximo))}
+        </div>
+    </div>` : ''}
+
+    ${(v.concorr || v.docs || v.materiais) ? `
+    <div class="rel-sec">
+        <h3>Observações Adicionais</h3>
+        <div class="rel-grid">
+            ${CF('Concorrência Mencionada', v.concorr)}
+            ${CF('Documentos Entregues / Recebidos', v.docs)}
+            ${CF('Materiais Enviados', v.materiais)}
+        </div>
+    </div>` : ''}
+
+    <div class="rel-footer">
+        <p>Gerado em: ${agora}</p>
+        <p>Tecwise — Sistema de Relatórios de Visitas Técnicas</p>
+    </div>`;
+}
+
+// =========================================================
+// MODAL
+// =========================================================
+function fecharModal() {
+    document.getElementById('modal-rel').classList.remove('open');
+}
+function fecharModalFora(e) {
+    if (e.target === document.getElementById('modal-rel')) fecharModal();
+}
+
+// =========================================================
+// TOAST DE NOTIFICAÇÃO
+// =========================================================
+function toast(msg, tipo) {
+    const el  = document.getElementById('toast');
+    const ico = document.getElementById('toast-ico');
+    document.getElementById('toast-msg').textContent = msg;
+    ico.className = tipo === 'err' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+    el.className = 'toast show ' + (tipo || '');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.className = 'toast'; }, 3200);
+}
+
+// =========================================================
+// CONFIGURAÇÕES
+// =========================================================
+function salvarConfig() {
+    const cfg = lerConfig();
+    cfg.nome = document.getElementById('cfg-nome').value.trim();
+    localStorage.setItem('tw-config', JSON.stringify(cfg));
+    toast('Configuração salva!', 'ok');
+}
+
+function exportarDados() {
+    const dados = localStorage.getItem('tw-visitas') || '[]';
+    const blob = new Blob([dados], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'tecwise-visitas-' + hoje() + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('Arquivo exportado!', 'ok');
+}
+
+function confirmarLimparTudo() {
+    if (confirm('Atenção! Esta ação apagará TODAS as visitas permanentemente. Confirma?')) {
+        localStorage.removeItem('tw-visitas');
+        atualizarCards();
+        toast('Todos os dados foram apagados.', 'err');
+    }
+}
+
+function confirmarSaida() {
+    if (confirm('Deseja sair do sistema?')) {
+        toast('Até logo!');
+    }
+}
+
+// Tecla ESC fecha o modal
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') fecharModal();
+});
+</script>
+</body>
+</html>
