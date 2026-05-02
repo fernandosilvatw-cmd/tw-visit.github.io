@@ -1,0 +1,6 @@
+# Configurações locais do Claude Code (não subir ao GitHub)
+.claude/settings.local.json
+
+# Pastas do sistema
+.DS_Store
+Thumbs.db
