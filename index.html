@@ -1850,10 +1850,10 @@ async function carregarTodasEmpresas() {
     let totalGeral = 0;
 
     try {
-        // Busca página por página até acabar
+        // Busca página por página usando links.next da resposta
         while (true) {
             mostrarStatusAgendor(
-                `<i class="fas fa-spinner fa-spin"></i> Carregando página ${pagina}... (${agendorEmpresas.length} empresas)`
+                `<i class="fas fa-spinner fa-spin"></i> Carregando... (${agendorEmpresas.length} empresas)`
             );
 
             const resp = await fetch(`${AGENDOR_PROXY}?page=${pagina}&per_page=100`);
@@ -1863,23 +1863,20 @@ async function carregarTodasEmpresas() {
                 throw new Error(erro.erro || `Erro HTTP ${resp.status}`);
             }
 
-            // Lê o total de registros do cabeçalho
-            const total = parseInt(resp.headers.get('X-Total-Count') || '0', 10);
-            if (pagina === 1) totalGeral = total;
-
             const dados = await resp.json();
 
-            // A API retorna { data: [...] } ou diretamente um array
+            // API retorna { data: [...], meta: { totalCount: N }, links: { next: ... } }
             const lista = Array.isArray(dados) ? dados : (dados.data || []);
-            if (lista.length === 0) break;
+            if (pagina === 1) totalGeral = dados.meta?.totalCount || lista.length;
 
+            if (lista.length === 0) break;
             agendorEmpresas.push(...lista);
 
             // Mostra resultados parciais enquanto carrega
             renderizarListaAgendor(agendorEmpresas);
 
-            // Para quando já carregamos tudo
-            if (agendorEmpresas.length >= totalGeral || lista.length < 100) break;
+            // Para quando não há próxima página ou já carregamos tudo
+            if (!dados.links?.next || agendorEmpresas.length >= totalGeral) break;
 
             pagina++;
         }
@@ -1943,10 +1940,16 @@ function renderizarListaAgendor(lista) {
     }
 
     el.innerHTML = lista.map((e, i) => {
-        const nome   = e.nickname || e.legalName || '(sem nome)';
+        // Campos reais da API v3 do Agendor
+        const nome   = e.name || e.legalName || '(sem nome)';
         const cnpj   = e.cnpj ? formatarCNPJ(e.cnpj) : '';
-        const setor  = e.sector || e.category || '';
-        const cidade = e.address?.city ? `${e.address.city}${e.address.state ? '/' + e.address.state : ''}` : '';
+        const setor  = e.sector?.name || '';
+        const categ  = e.category?.name || '';
+        const cidade = e.address?.city
+            ? `${e.address.city}${e.address.state ? '/' + e.address.state : ''}`
+            : '';
+        // Primeiro contato da empresa (para exibição)
+        const contato = e.people?.[0]?.name || '';
 
         return `
         <div onclick="selecionarEmpresaAgendor(${i})"
@@ -1955,14 +1958,16 @@ function renderizarListaAgendor(lista) {
              onmouseout="this.style.background='';this.style.borderColor='#f1f5f9';">
             <div style="font-size:14px;font-weight:600;color:#0f172a;">${nome}</div>
             <div style="font-size:11px;color:#94a3b8;margin-top:3px;display:flex;gap:12px;flex-wrap:wrap;">
-                ${cnpj   ? `<span><i class="fas fa-id-card"></i> ${cnpj}</span>` : ''}
-                ${setor  ? `<span><i class="fas fa-tag"></i> ${setor}</span>` : ''}
-                ${cidade ? `<span><i class="fas fa-map-marker-alt"></i> ${cidade}</span>` : ''}
+                ${cnpj    ? `<span><i class="fas fa-id-card"></i> ${cnpj}</span>` : ''}
+                ${setor   ? `<span><i class="fas fa-tag"></i> ${setor}</span>` : ''}
+                ${categ   ? `<span><i class="fas fa-bookmark"></i> ${categ}</span>` : ''}
+                ${cidade  ? `<span><i class="fas fa-map-marker-alt"></i> ${cidade}</span>` : ''}
+                ${contato ? `<span><i class="fas fa-user"></i> ${contato}</span>` : ''}
             </div>
         </div>`;
     }).join('');
 
-    // Armazena lista filtrada temporariamente para o índice do onclick
+    // Armazena lista filtrada para o índice do onclick
     el._listaAtual = lista;
 }
 
@@ -1971,36 +1976,46 @@ function renderizarListaAgendor(lista) {
 // ---------------------------------------------------------
 function selecionarEmpresaAgendor(indice) {
     const lista = document.getElementById('agendor-lista')._listaAtual || agendorEmpresas;
-    const empresa = lista[indice];
-    if (!empresa) return;
+    const e = lista[indice];
+    if (!e) return;
 
-    // Preenche o nome da empresa
-    document.getElementById('f-empresa').value = empresa.nickname || empresa.legalName || '';
+    const nome = e.name || e.legalName || '';
 
-    // Preenche o CNPJ com máscara
-    if (empresa.cnpj) {
-        document.getElementById('f-cnpj').value = formatarCNPJ(empresa.cnpj);
+    // Preenche nome da empresa
+    document.getElementById('f-empresa').value = nome;
+
+    // Preenche CNPJ com máscara
+    if (e.cnpj) {
+        document.getElementById('f-cnpj').value = formatarCNPJ(e.cnpj);
     }
 
     // Tenta mapear o setor do Agendor para as opções do formulário
-    if (empresa.sector || empresa.category) {
-        const setorAgendor = (empresa.sector || empresa.category || '').toLowerCase();
+    const setorBruto = (e.sector?.name || '').toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '');
+    if (setorBruto) {
         const mapeamento = {
-            'tecnologia': 'Tecnologia', 'tech': 'Tecnologia', 'ti': 'Tecnologia', 'software': 'Tecnologia',
-            'saúde': 'Saúde', 'saude': 'Saúde', 'health': 'Saúde', 'farmac': 'Saúde',
-            'educação': 'Educação', 'educacao': 'Educação', 'ensino': 'Educação',
-            'varejo': 'Varejo', 'retail': 'Varejo', 'comercio': 'Varejo', 'comércio': 'Varejo',
-            'industria': 'Indústria', 'indústria': 'Indústria', 'manufat': 'Indústria',
-            'agro': 'Agronegócio', 'agronegocio': 'Agronegócio', 'agronegócio': 'Agronegócio',
-            'financeiro': 'Financeiro', 'financ': 'Financeiro', 'banco': 'Financeiro',
-            'logística': 'Logística', 'logistica': 'Logística', 'transport': 'Logística',
+            'tecnologia': 'Tecnologia', 'tech': 'Tecnologia', 'ti ': 'Tecnologia', 'software': 'Tecnologia', 'digital': 'Tecnologia',
+            'saude': 'Saúde', 'health': 'Saúde', 'farmac': 'Saúde', 'hospital': 'Saúde', 'medic': 'Saúde',
+            'educac': 'Educação', 'ensino': 'Educação', 'escola': 'Educação', 'universidade': 'Educação',
+            'varejo': 'Varejo', 'retail': 'Varejo', 'comercio': 'Varejo', 'loja': 'Varejo',
+            'industria': 'Indústria', 'manufat': 'Indústria', 'producao': 'Indústria', 'fabrica': 'Indústria',
+            'minerac': 'Indústria', 'mineracao': 'Indústria', 'minera': 'Indústria',
+            'agro': 'Agronegócio', 'agricul': 'Agronegócio', 'pecuaria': 'Agronegócio',
+            'financeiro': 'Financeiro', 'financ': 'Financeiro', 'banco': 'Financeiro', 'seguro': 'Financeiro',
+            'logistic': 'Logística', 'transport': 'Logística', 'frete': 'Logística',
         };
-        const segmento = Object.keys(mapeamento).find(k => setorAgendor.includes(k));
-        if (segmento) document.getElementById('f-segmento').value = mapeamento[segmento];
+        const chave = Object.keys(mapeamento).find(k => setorBruto.includes(k));
+        if (chave) document.getElementById('f-segmento').value = mapeamento[chave];
+    }
+
+    // Preenche o primeiro contato da empresa (se houver)
+    if (e.people && e.people.length > 0) {
+        const primeiros = e.people.slice(0, 2).map(p => p.name).join(' / ');
+        document.getElementById('f-contato').value = primeiros;
     }
 
     fecharAgendor();
-    toast(`Empresa "${empresa.nickname || empresa.legalName}" selecionada do Agendor.`, 'ok');
+    toast(`"${nome}" selecionada do Agendor.`, 'ok');
 }
 
 // ---------------------------------------------------------
