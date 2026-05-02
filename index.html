@@ -819,8 +819,28 @@ input[type="range"]::-webkit-slider-thumb {
                             <input type="hidden" id="f-agendor-org-id" value="">
                         </div>
                         <div class="fg">
-                            <label>Nome e Cargo do(s) Contato(s)</label>
-                            <input type="text" id="f-contato" placeholder="Ex: João Silva — Diretor de TI">
+                            <label>Nome do Cliente</label>
+                            <div style="position:relative;">
+                                <input type="text" id="f-cliente-nome" placeholder="Preenchido ao selecionar o negócio">
+                                <span id="cliente-loading"
+                                    style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#2563eb;font-size:13px;">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="g3">
+                        <div class="fg">
+                            <label>Cargo do Cliente</label>
+                            <input type="text" id="f-cliente-cargo" placeholder="Cargo / função">
+                        </div>
+                        <div class="fg">
+                            <label>E-mail do Cliente</label>
+                            <input type="email" id="f-cliente-email" placeholder="email@empresa.com">
+                        </div>
+                        <div class="fg">
+                            <label>Telefone do Cliente</label>
+                            <input type="tel" id="f-cliente-tel" placeholder="(00) 00000-0000">
                         </div>
                     </div>
                 </div>
@@ -1356,7 +1376,10 @@ function coletarForm() {
         negocio:      document.getElementById('f-negocio').value,
         agendorOrgId: document.getElementById('f-agendor-org-id').value,
         segmento:     document.getElementById('f-segmento').value,
-        contato:      document.getElementById('f-contato').value,
+        clienteNome:  document.getElementById('f-cliente-nome').value,
+        clienteCargo: document.getElementById('f-cliente-cargo').value,
+        clienteEmail: document.getElementById('f-cliente-email').value,
+        clienteTel:   document.getElementById('f-cliente-tel').value,
         // Objetivo
         tipo:         document.getElementById('f-tipo').value,
         objetivo:     document.getElementById('f-objetivo').value,
@@ -1545,7 +1568,10 @@ function editarVisita(id) {
     document.getElementById('f-negocio').value      = v.negocio || '';
     document.getElementById('f-agendor-org-id').value = v.agendorOrgId || '';
     document.getElementById('f-segmento').value    = v.segmento || '';
-    document.getElementById('f-contato').value     = v.contato || '';
+    document.getElementById('f-cliente-nome').value  = v.clienteNome  || '';
+    document.getElementById('f-cliente-cargo').value = v.clienteCargo || '';
+    document.getElementById('f-cliente-email').value = v.clienteEmail || '';
+    document.getElementById('f-cliente-tel').value   = v.clienteTel   || '';
     document.getElementById('f-tipo').value        = v.tipo || '';
     document.getElementById('f-objetivo').value    = v.objetivo || '';
     document.getElementById('f-pauta').value       = v.pauta || '';
@@ -1679,7 +1705,10 @@ function montarRelatorio(v) {
             ${C('Negócio', v.negocio)}
             ${C('Segmento', v.segmento)}
             ${C('Tipo de Visita', v.tipo)}
-            ${C('Contato(s)', v.contato)}
+            ${C('Nome do Cliente',     v.clienteNome)}
+            ${C('Cargo do Cliente',    v.clienteCargo)}
+            ${C('E-mail do Cliente',   v.clienteEmail)}
+            ${C('Telefone do Cliente', v.clienteTel)}
         </div>
     </div>
 
@@ -1976,6 +2005,57 @@ function selecionarNegocio(indice) {
 
     fecharNegocio();
     toast(`Negócio "${titulo}" selecionado.`, 'ok');
+
+    // Busca os dados do contato vinculado ao negócio no Agendor
+    if (n.person?.id) {
+        preencherContatoDoNegocio(n.person.id);
+    } else {
+        // Sem contato vinculado: limpa os campos
+        document.getElementById('f-cliente-nome').value  = '';
+        document.getElementById('f-cliente-cargo').value = '';
+        document.getElementById('f-cliente-email').value = '';
+        document.getElementById('f-cliente-tel').value   = '';
+    }
+}
+
+// ---------------------------------------------------------
+// Busca dados do contato no Agendor e preenche os 4 campos
+// ---------------------------------------------------------
+async function preencherContatoDoNegocio(personId) {
+    // Exibe spinner de carregamento no campo de nome
+    const loading = document.getElementById('cliente-loading');
+    if (loading) loading.style.display = 'inline';
+
+    try {
+        const resp = await fetch(`${AGENDOR_PROXY}/person?id=${personId}`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+        const dados = await resp.json();
+
+        // A API retorna { data: { ... } } ou o objeto direto
+        const p = dados.data || dados;
+
+        // Preenche os campos com os dados do contato
+        document.getElementById('f-cliente-nome').value =
+            p.name || '';
+
+        document.getElementById('f-cliente-cargo').value =
+            p.jobTitle || p.role || p.position || '';
+
+        // E-mail: pode estar em contact.email ou diretamente em email
+        document.getElementById('f-cliente-email').value =
+            p.contact?.email || p.email || '';
+
+        // Telefone: prioriza celular, depois comercial
+        document.getElementById('f-cliente-tel').value =
+            p.contact?.mobile || p.contact?.work || p.mobile || p.phone || '';
+
+    } catch (erro) {
+        // Falha silenciosa — campos ficam editáveis para preenchimento manual
+        console.warn('Agendor /person:', erro.message);
+    } finally {
+        if (loading) loading.style.display = 'none';
+    }
 }
 
 // ---------------------------------------------------------
@@ -2206,11 +2286,11 @@ function selecionarEmpresaAgendor(indice) {
         if (chave) document.getElementById('f-segmento').value = mapeamento[chave];
     }
 
-    // Preenche o primeiro contato da empresa (se houver)
-    if (e.people && e.people.length > 0) {
-        const primeiros = e.people.slice(0, 2).map(p => p.name).join(' / ');
-        document.getElementById('f-contato').value = primeiros;
-    }
+    // Limpa os campos de cliente (serão preenchidos ao selecionar o negócio)
+    document.getElementById('f-cliente-nome').value  = '';
+    document.getElementById('f-cliente-cargo').value = '';
+    document.getElementById('f-cliente-email').value = '';
+    document.getElementById('f-cliente-tel').value   = '';
 
     fecharAgendor();
     toast(`"${nome}" selecionada do Agendor.`, 'ok');

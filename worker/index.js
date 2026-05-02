@@ -1,7 +1,8 @@
 // Worker proxy para a API do Agendor CRM
 // Rotas:
-//   GET /             → lista empresas (organizations)
-//   GET /deals?orgId= → negócios de uma empresa específica
+//   GET /                → lista de empresas (organizations)
+//   GET /deals?orgId=    → negócios de uma empresa
+//   GET /person?id=      → dados de um contato (nome, cargo, email, telefone)
 
 const ORIGENS_PERMITIDAS = [
   'https://tw-visit.pages.dev',
@@ -23,31 +24,41 @@ export default {
     }
 
     if (!env.AGENDOR_TOKEN) {
-      return resposta({ erro: 'Token do Agendor não configurado.' }, 500, cors);
+      return resp({ erro: 'Token do Agendor não configurado.' }, 500, cors);
     }
 
     const url  = new URL(request.url);
     const path = url.pathname;
 
-    // ── Rota: negócios de uma empresa ──────────────────────
-    if (path === '/deals') {
-      const orgId = url.searchParams.get('orgId');
-      if (!orgId) return resposta({ erro: 'Parâmetro orgId é obrigatório.' }, 400, cors);
+    // ── Rota: dados de um contato ──────────────────────────
+    if (path === '/person') {
+      const personId = url.searchParams.get('id');
+      if (!personId) return resp({ erro: 'Parâmetro id é obrigatório.' }, 400, cors);
 
       try {
-        // Busca todos os negócios da empresa (até 100 por chamada)
-        const agendorUrl =
-          `https://api.agendor.com.br/v3/organizations/${orgId}/deals?per_page=100`;
-
-        const r = await fetch(agendorUrl, {
-          headers: { 'Authorization': `Token ${env.AGENDOR_TOKEN}` }
-        });
-
-        const dados = await r.json();
-        return resposta(dados, r.status, cors);
-
+        const r = await fetch(
+          `https://api.agendor.com.br/v3/people/${personId}`,
+          { headers: { 'Authorization': `Token ${env.AGENDOR_TOKEN}` } }
+        );
+        return resp(await r.json(), r.status, cors);
       } catch (e) {
-        return resposta({ erro: 'Falha ao buscar negócios: ' + e.message }, 502, cors);
+        return resp({ erro: 'Falha ao buscar contato: ' + e.message }, 502, cors);
+      }
+    }
+
+    // ── Rota: negócios de uma empresa ─────────────────────
+    if (path === '/deals') {
+      const orgId = url.searchParams.get('orgId');
+      if (!orgId) return resp({ erro: 'Parâmetro orgId é obrigatório.' }, 400, cors);
+
+      try {
+        const r = await fetch(
+          `https://api.agendor.com.br/v3/organizations/${orgId}/deals?per_page=100`,
+          { headers: { 'Authorization': `Token ${env.AGENDOR_TOKEN}` } }
+        );
+        return resp(await r.json(), r.status, cors);
+      } catch (e) {
+        return resp({ erro: 'Falha ao buscar negócios: ' + e.message }, 502, cors);
       }
     }
 
@@ -56,24 +67,18 @@ export default {
     const perPage = url.searchParams.get('per_page') || '100';
 
     try {
-      const agendorUrl =
-        `https://api.agendor.com.br/v3/organizations?page=${page}&per_page=${perPage}`;
-
-      const r = await fetch(agendorUrl, {
-        headers: { 'Authorization': `Token ${env.AGENDOR_TOKEN}` }
-      });
-
-      const dados = await r.json();
-      return resposta(dados, r.status, cors);
-
+      const r = await fetch(
+        `https://api.agendor.com.br/v3/organizations?page=${page}&per_page=${perPage}`,
+        { headers: { 'Authorization': `Token ${env.AGENDOR_TOKEN}` } }
+      );
+      return resp(await r.json(), r.status, cors);
     } catch (e) {
-      return resposta({ erro: 'Falha ao buscar empresas: ' + e.message }, 502, cors);
+      return resp({ erro: 'Falha ao buscar empresas: ' + e.message }, 502, cors);
     }
   }
 };
 
-// Utilitário: retorna Response JSON com CORS
-function resposta(dados, status, cors) {
+function resp(dados, status, cors) {
   return new Response(JSON.stringify(dados), {
     status,
     headers: { ...cors, 'Content-Type': 'application/json' }
