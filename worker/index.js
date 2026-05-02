@@ -30,6 +30,22 @@ export default {
     const url  = new URL(request.url);
     const path = url.pathname;
 
+    // ── Rota: dados básicos de um negócio (com organization.people) ──
+    if (path === '/deal') {
+      const dealId = url.searchParams.get('id');
+      if (!dealId) return resp({ erro: 'Parâmetro id é obrigatório.' }, 400, cors);
+
+      try {
+        const r = await fetch(
+          `https://api.agendor.com.br/v3/deals/${dealId}`,
+          { headers: { 'Authorization': `Token ${env.AGENDOR_TOKEN}` } }
+        );
+        return resp(await r.json(), r.status, cors);
+      } catch (e) {
+        return resp({ erro: 'Falha ao buscar negócio: ' + e.message }, 502, cors);
+      }
+    }
+
     // ── Rota: dados de um contato ──────────────────────────
     if (path === '/person') {
       const personId = url.searchParams.get('id');

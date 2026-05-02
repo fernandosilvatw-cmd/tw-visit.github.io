@@ -1210,6 +1210,24 @@ input[type="range"]::-webkit-slider-thumb {
     </div>
 </div>
 
+<!-- ============================================================
+     MODAL SELEÇÃO DE CONTATO
+     ============================================================ -->
+<div class="modal-overlay" id="modal-contato" onclick="fecharContatoFora(event)">
+    <div class="modal-box" style="max-width:500px;">
+        <div class="modal-head">
+            <h2><i class="fas fa-user-tie" style="color:#2563eb;margin-right:8px;"></i>Selecionar Contato do Cliente</h2>
+            <button class="btn-close" onclick="fecharContato()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="padding:14px 20px 8px;">
+            <p style="font-size:12px;color:#64748b;margin-bottom:12px;">
+                Selecione o contato vinculado a este negócio:
+            </p>
+            <div id="contato-lista" style="max-height:360px;overflow-y:auto;margin:0 -20px;padding:0 20px 16px;"></div>
+        </div>
+    </div>
+</div>
+
 <!-- Toast de notificação -->
 <div class="toast" id="toast">
     <i class="fas fa-check-circle" id="toast-ico"></i>
@@ -1847,6 +1865,7 @@ document.addEventListener('keydown', e => {
         fecharModal();
         fecharAgendor();
         fecharNegocio();
+        fecharContato();
     }
 });
 
@@ -1987,6 +2006,10 @@ function renderizarNegociosAgendor(lista, mostrandoTodos) {
 // ---------------------------------------------------------
 // Seleciona um negócio e preenche o campo do formulário
 // ---------------------------------------------------------
+// ---------------------------------------------------------
+// Seleciona um negócio: preenche campos e busca contatos
+// nos dados básicos do próprio negócio (organization.people)
+// ---------------------------------------------------------
 function selecionarNegocio(indice) {
     const lista = document.getElementById('negocio-lista')._listaNegocio || [];
     const n = lista[indice];
@@ -1995,7 +2018,7 @@ function selecionarNegocio(indice) {
     const titulo = n.title || n.name || n.description || `Negócio #${n.id}`;
     document.getElementById('f-negocio').value = titulo;
 
-    // Preenche o valor da oportunidade com o valor do negócio
+    // Preenche valor da oportunidade
     if (n.value != null && n.value > 0) {
         const valorFmt = Number(n.value).toFixed(2)
             .replace('.', ',')
@@ -2006,23 +2029,62 @@ function selecionarNegocio(indice) {
     fecharNegocio();
     toast(`Negócio "${titulo}" selecionado.`, 'ok');
 
-    // Busca os dados do contato vinculado ao negócio no Agendor
-    if (n.person?.id) {
-        preencherContatoDoNegocio(n.person.id);
-    } else {
-        // Sem contato vinculado: limpa os campos
-        document.getElementById('f-cliente-nome').value  = '';
-        document.getElementById('f-cliente-cargo').value = '';
-        document.getElementById('f-cliente-email').value = '';
-        document.getElementById('f-cliente-tel').value   = '';
+    // Limpa campos de contato enquanto busca
+    limparCamposContato();
+
+    // Busca os dados básicos do negócio para obter organization.people
+    buscarContatosDoNegocio(n.id);
+}
+
+// ---------------------------------------------------------
+// Busca GET /v3/deals/{id} e extrai organization.people
+// ---------------------------------------------------------
+async function buscarContatosDoNegocio(dealId) {
+    const loading = document.getElementById('cliente-loading');
+    if (loading) loading.style.display = 'inline';
+
+    try {
+        const resp = await fetch(`${AGENDOR_PROXY}/deal?id=${dealId}`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+        const dados = await resp.json();
+        const deal  = dados.data || dados;
+
+        // Os contatos estão em organization.people nos dados básicos do negócio
+        const pessoas = deal.organization?.people || [];
+
+        if (pessoas.length === 0) {
+            // Sem contatos na empresa — campos ficam para preenchimento manual
+        } else if (pessoas.length === 1) {
+            // Apenas 1 contato: preenche nome e email do dado básico,
+            // depois busca cargo e telefone no endpoint /person
+            preencherCamposBasicos(pessoas[0]);
+            buscarDetalhesContato(pessoas[0].id);
+        } else {
+            // Múltiplos contatos: abre seletor para o usuário escolher
+            abrirSeletorContato(pessoas);
+        }
+
+    } catch (erro) {
+        console.warn('Agendor /deal:', erro.message);
+    } finally {
+        if (loading) loading.style.display = 'none';
     }
 }
 
 // ---------------------------------------------------------
-// Busca dados do contato no Agendor e preenche os 4 campos
+// Preenche nome e e-mail com os dados básicos do negócio
+// (disponíveis sem chamada extra)
 // ---------------------------------------------------------
-async function preencherContatoDoNegocio(personId) {
-    // Exibe spinner de carregamento no campo de nome
+function preencherCamposBasicos(pessoa) {
+    document.getElementById('f-cliente-nome').value  = pessoa.name  || '';
+    document.getElementById('f-cliente-email').value = pessoa.email || '';
+}
+
+// ---------------------------------------------------------
+// Busca cargo e telefone no endpoint /person (dados completos)
+// ---------------------------------------------------------
+async function buscarDetalhesContato(personId) {
     const loading = document.getElementById('cliente-loading');
     if (loading) loading.style.display = 'inline';
 
@@ -2031,31 +2093,86 @@ async function preencherContatoDoNegocio(personId) {
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
         const dados = await resp.json();
-
-        // A API retorna { data: { ... } } ou o objeto direto
         const p = dados.data || dados;
 
-        // Preenche os campos com os dados do contato
-        document.getElementById('f-cliente-nome').value =
-            p.name || '';
-
+        // Cargo
         document.getElementById('f-cliente-cargo').value =
-            p.jobTitle || p.role || p.position || '';
+            p.role || p.jobTitle || p.position || '';
 
-        // E-mail: pode estar em contact.email ou diretamente em email
-        document.getElementById('f-cliente-email').value =
-            p.contact?.email || p.email || '';
+        // Email (complementa se ainda vazio)
+        if (!document.getElementById('f-cliente-email').value) {
+            document.getElementById('f-cliente-email').value =
+                p.contact?.email || p.email || '';
+        }
 
-        // Telefone: prioriza celular, depois comercial
+        // Telefone: celular tem prioridade, depois comercial
         document.getElementById('f-cliente-tel').value =
-            p.contact?.mobile || p.contact?.work || p.mobile || p.phone || '';
+            p.contact?.mobile || p.contact?.work || '';
 
     } catch (erro) {
-        // Falha silenciosa — campos ficam editáveis para preenchimento manual
         console.warn('Agendor /person:', erro.message);
     } finally {
         if (loading) loading.style.display = 'none';
     }
+}
+
+// ---------------------------------------------------------
+// Abre o modal de seleção quando há múltiplos contatos
+// ---------------------------------------------------------
+function abrirSeletorContato(pessoas) {
+    const el = document.getElementById('contato-lista');
+
+    el.innerHTML = pessoas.map((p, i) => `
+        <div onclick="selecionarContatoModal(${i})"
+             style="padding:11px 14px;border-radius:8px;cursor:pointer;border:1.5px solid #f1f5f9;margin-bottom:6px;transition:all 0.15s;"
+             onmouseover="this.style.background='#f0f7ff';this.style.borderColor='#bfdbfe';"
+             onmouseout="this.style.background='';this.style.borderColor='#f1f5f9';">
+            <div style="font-size:14px;font-weight:600;color:#0f172a;">
+                <i class="fas fa-user" style="color:#2563eb;margin-right:6px;font-size:12px;"></i>${p.name || '(sem nome)'}
+            </div>
+            ${p.email ? `<div style="font-size:12px;color:#64748b;margin-top:3px;">
+                <i class="fas fa-envelope" style="margin-right:5px;"></i>${p.email}
+            </div>` : ''}
+        </div>`
+    ).join('');
+
+    // Guarda a lista para o onclick
+    el._pessoasSeletor = pessoas;
+
+    document.getElementById('modal-contato').classList.add('open');
+}
+
+function selecionarContatoModal(indice) {
+    const pessoas = document.getElementById('contato-lista')._pessoasSeletor || [];
+    const p = pessoas[indice];
+    if (!p) return;
+
+    preencherCamposBasicos(p);
+    fecharContato();
+
+    // Busca cargo e telefone completos
+    buscarDetalhesContato(p.id);
+    toast(`Contato "${p.name}" selecionado.`, 'ok');
+}
+
+// ---------------------------------------------------------
+// Limpa os 4 campos de contato
+// ---------------------------------------------------------
+function limparCamposContato() {
+    document.getElementById('f-cliente-nome').value  = '';
+    document.getElementById('f-cliente-cargo').value = '';
+    document.getElementById('f-cliente-email').value = '';
+    document.getElementById('f-cliente-tel').value   = '';
+}
+
+// ---------------------------------------------------------
+// Fecha o modal de contato
+// ---------------------------------------------------------
+function fecharContato() {
+    document.getElementById('modal-contato').classList.remove('open');
+}
+function fecharContatoFora(e) {
+    if (e.target === document.getElementById('modal-contato')) fecharContato();
 }
 
 // ---------------------------------------------------------
