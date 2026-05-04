@@ -881,7 +881,7 @@ input[type="range"]::-webkit-slider-thumb {
         <button class="nav-item active" onclick="navegar('inicio', this)">
             <i class="fas fa-home"></i><span>Início</span>
         </button>
-        <button class="nav-item" onclick="navegar('dashboard', this)">
+        <button class="nav-item" onclick="navegarDashboard('brasil', this)">
             <i class="fas fa-chart-pie"></i><span>Dashboard</span>
         </button>
         <button class="nav-item" onclick="navegar('nova-visita', this)">
@@ -889,6 +889,9 @@ input[type="range"]::-webkit-slider-thumb {
         </button>
         <button class="nav-item" onclick="navegar('historico', this)">
             <i class="fas fa-folder-open"></i><span>Histórico</span>
+        </button>
+        <button class="nav-item" onclick="navegarDashboard('chile', this)">
+            <i class="fas fa-flag"></i><span>Dashboard Chile</span>
         </button>
         <button class="nav-item" onclick="navegar('sobre', this)">
             <i class="fas fa-info-circle"></i><span>Sobre</span>
@@ -954,8 +957,8 @@ input[type="range"]::-webkit-slider-thumb {
          ====================================================== -->
     <div class="page-section" id="page-dashboard">
         <div class="page-header">
-            <h1>Dashboard de Negócios</h1>
-            <p>Dados em tempo real do Agendor CRM</p>
+            <h1 id="dash-titulo">Dashboard de Negócios</h1>
+            <p id="dash-subtitulo">Dados em tempo real do Agendor CRM</p>
         </div>
 
         <!-- Filtros de período -->
@@ -3067,7 +3070,29 @@ function fecharAgendorFora(e) {
 // =========================================================
 
 const DASH_CACHE_KEY = 'agendor-dash-deals-cache';
-let dashGanhos = []; // deals ganhos do período atual (para drill-down)
+let dashGanhos  = []; // deals ganhos do período atual (para drill-down)
+let dashContexto = 'brasil'; // 'brasil' | 'chile'
+
+// Usuários da operação Chile — excluídos do dashboard Brasil,
+// exclusivos no dashboard Chile
+const USUARIOS_CHILE = ['tomas castilho', 'tomas castillo', 'marcela', 'gustavo carvalho'];
+
+function isChile(deal) {
+    const owner = (deal.owner?.name || '').toLowerCase();
+    return USUARIOS_CHILE.some(u => owner.includes(u.split(' ')[0]));
+}
+
+// Retorna apenas os deals do contexto atual (brasil ou chile)
+function filtrarPorContexto(deals) {
+    if (dashContexto === 'chile') return deals.filter(isChile);
+    return deals.filter(d => !isChile(d));
+}
+
+// Navegação para um dos dashboards
+function navegarDashboard(contexto, el) {
+    dashContexto = contexto;
+    navegar('dashboard', el);
+}
 const DASH_CACHE_TTL = 30 * 60 * 1000; // 30 minutos
 
 let dashDeals = []; // todos os deals carregados
@@ -3144,6 +3169,7 @@ async function buscarTodosNegociosDash() {
                 wonAt:       d.wonAt      || null,
                 lostAt:      d.lostAt     || null,
                 organization:{ name: d.organization?.name || '' },
+                owner:        { name: d.owner?.name        || '' },
             }));
             dashDeals.push(...slim);
 
@@ -3197,12 +3223,23 @@ function limparFiltroDash() {
 }
 
 function renderizarMetricas() {
+    // Atualiza título e subtítulo conforme o contexto
+    const isChileCtx = dashContexto === 'chile';
+    document.getElementById('dash-titulo').textContent =
+        isChileCtx ? 'Dashboard Chile' : 'Dashboard de Negócios — Brasil';
+    document.getElementById('dash-subtitulo').textContent = isChileCtx
+        ? 'Equipe Chile: Tomas Castilho · Marcela · Gustavo Carvalho'
+        : 'Dados em tempo real do Agendor CRM (excluindo equipe Chile)';
+
     const iniStr = document.getElementById('dash-ini').value;
     const fimStr = document.getElementById('dash-fim').value;
     const ini = iniStr ? new Date(iniStr + 'T00:00:00') : null;
     const fim = fimStr ? new Date(fimStr + 'T23:59:59') : null;
 
     const semFiltro = !ini && !fim;
+
+    // Aplica filtro de contexto (Brasil ou Chile) antes dos demais filtros
+    const base = filtrarPorContexto(dashDeals);
 
     const dentro = (dateStr) => {
         if (!dateStr) return false;
@@ -3212,16 +3249,16 @@ function renderizarMetricas() {
         return true;
     };
 
-    // Ganhos: dealStatus.id=2 + wonAt obrigatoriamente preenchido + dentro do período
-    const ganhos = dashDeals.filter(d => {
-        if (d.dealStatus?.id !== 2) return false; // só status "Ganho"
-        if (!d.wonAt) return false;               // ignora sem wonAt
+    // Ganhos: dealStatus.id=2 + wonAt preenchido + dentro do período
+    const ganhos = base.filter(d => {
+        if (d.dealStatus?.id !== 2) return false;
+        if (!d.wonAt) return false;
         if (semFiltro) return true;
-        return dentro(d.wonAt);                   // filtra pela data de ganho
+        return dentro(d.wonAt);
     });
 
-    // Iniciados: todos os deals com startTime no período
-    const iniciados = dashDeals.filter(d => {
+    // Iniciados: todos os deals do contexto com startTime no período
+    const iniciados = base.filter(d => {
         if (semFiltro) return true;
         return dentro(d.startTime);
     });
@@ -3357,9 +3394,10 @@ function abrirListaGanhos() {
 function voltarDashboard() {
     document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
     document.getElementById('page-dashboard').classList.add('active');
-    // Mantém o item Dashboard ativo na sidebar
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.querySelectorAll('.nav-item')[1].classList.add('active');
+    // Ativa o nav item correto conforme o contexto (Brasil=1, Chile=4)
+    const idx = dashContexto === 'chile' ? 4 : 1;
+    document.querySelectorAll('.nav-item')[idx].classList.add('active');
     window.scrollTo(0, 0);
 }
 
