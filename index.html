@@ -674,6 +674,72 @@ input[type="range"]::-webkit-slider-thumb {
 .user-badge.admin { background: #dbeafe; color: #1d4ed8; }
 .user-badge.user  { background: #f1f5f9; color: #64748b; }
 .user-badge.novo  { background: #fef3c7; color: #b45309; }
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+.dash-filters {
+    background: white; border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    padding: 18px 22px; margin-bottom: 20px;
+    display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap;
+}
+.dash-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px; margin-bottom: 20px;
+}
+.dash-card {
+    background: white; border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    padding: 22px 20px; position: relative; overflow: hidden;
+}
+.dash-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 4px;
+}
+.dash-card.azul::before  { background: #2563eb; }
+.dash-card.verde::before { background: #16a34a; }
+.dash-card.verm::before  { background: #dc2626; }
+.dash-card.amber::before { background: #d97706; }
+
+.dash-card-ico {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; margin-bottom: 14px;
+}
+.dash-card.azul  .dash-card-ico { background: #dbeafe; color: #2563eb; }
+.dash-card.verde .dash-card-ico { background: #dcfce7; color: #16a34a; }
+.dash-card.verm  .dash-card-ico { background: #fee2e2; color: #dc2626; }
+.dash-card.amber .dash-card-ico { background: #fef3c7; color: #d97706; }
+
+.dash-card-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+.dash-card-num   { font-size: 28px; font-weight: 800; color: #0f172a; line-height: 1; margin-bottom: 4px; }
+.dash-card-val   { font-size: 13px; font-weight: 600; color: #475569; }
+.dash-card-sub   { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+/* Barra de taxa */
+.taxa-row { margin-bottom: 10px; }
+.taxa-lbl { font-size: 11px; color: #64748b; margin-bottom: 4px; display: flex; justify-content: space-between; }
+.taxa-bar { height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+.taxa-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+.taxa-fill.verde { background: #16a34a; }
+.taxa-fill.verm  { background: #dc2626; }
+
+/* Tabela de deals */
+.dash-table { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); overflow: hidden; }
+.dash-table-head { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 0; background: #f8fafc; padding: 10px 18px; border-bottom: 1px solid #f1f5f9; }
+.dash-table-head span { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+.dash-table-row  { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 0; padding: 11px 18px; border-bottom: 1px solid #f8fafc; align-items: center; }
+.dash-table-row:last-child { border-bottom: none; }
+.dash-table-row:hover { background: #f8fafc; }
+.ds-status { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; }
+.ds-andamento { background: #dbeafe; color: #1d4ed8; }
+.ds-ganho     { background: #dcfce7; color: #15803d; }
+.ds-perdido   { background: #fee2e2; color: #b91c1c; }
+
+@media (max-width: 1024px) { .dash-cards { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px)  { .dash-cards { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -815,6 +881,9 @@ input[type="range"]::-webkit-slider-thumb {
         <button class="nav-item active" onclick="navegar('inicio', this)">
             <i class="fas fa-home"></i><span>Início</span>
         </button>
+        <button class="nav-item" onclick="navegar('dashboard', this)">
+            <i class="fas fa-chart-pie"></i><span>Dashboard</span>
+        </button>
         <button class="nav-item" onclick="navegar('nova-visita', this)">
             <i class="fas fa-clipboard-list"></i><span>Nova Visita</span>
         </button>
@@ -877,6 +946,112 @@ input[type="range"]::-webkit-slider-thumb {
                 <div class="lbl">Oportunidades</div>
                 <div class="val" id="c-oport">0</div>
             </div>
+        </div>
+    </div>
+
+    <!-- ======================================================
+         PÁGINA: DASHBOARD
+         ====================================================== -->
+    <div class="page-section" id="page-dashboard">
+        <div class="page-header">
+            <h1>Dashboard de Negócios</h1>
+            <p>Dados em tempo real do Agendor CRM</p>
+        </div>
+
+        <!-- Filtros de período -->
+        <div class="dash-filters">
+            <div class="fg" style="flex:0 0 160px;">
+                <label>Data Inicial</label>
+                <input type="date" id="dash-ini">
+            </div>
+            <div class="fg" style="flex:0 0 160px;">
+                <label>Data Final</label>
+                <input type="date" id="dash-fim">
+            </div>
+            <button class="btn btn-primary" onclick="aplicarFiltroDash()" style="margin-bottom:1px;">
+                <i class="fas fa-filter"></i> Aplicar
+            </button>
+            <button class="btn btn-secondary" onclick="limparFiltroDash()" style="margin-bottom:1px;">
+                <i class="fas fa-times"></i> Limpar
+            </button>
+            <div id="dash-cache-info" style="margin-left:auto;font-size:11px;color:#94a3b8;align-self:center;"></div>
+        </div>
+
+        <!-- Status de carregamento -->
+        <div id="dash-loading" style="display:none;text-align:center;padding:48px;color:#64748b;">
+            <i class="fas fa-spinner fa-spin" style="font-size:28px;margin-bottom:12px;display:block;color:#2563eb;"></i>
+            <div id="dash-loading-txt">Carregando negócios do Agendor...</div>
+            <div style="margin-top:12px;max-width:300px;margin-left:auto;margin-right:auto;">
+                <div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;">
+                    <div id="dash-progress-bar" style="height:100%;background:#2563eb;border-radius:3px;width:0%;transition:width 0.3s;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="dash-erro" style="display:none;background:#fee2e2;color:#b91c1c;padding:14px 18px;border-radius:10px;margin-bottom:16px;font-size:13px;"></div>
+
+        <!-- Cards de métricas -->
+        <div class="dash-cards" id="dash-cards" style="display:none;">
+            <!-- Em Andamento -->
+            <div class="dash-card azul">
+                <div class="dash-card-ico"><i class="fas fa-sync-alt"></i></div>
+                <div class="dash-card-label">Em Andamento</div>
+                <div class="dash-card-num" id="dm-and-qtd">—</div>
+                <div class="dash-card-val" id="dm-and-val">—</div>
+                <div class="dash-card-sub">negócios ativos</div>
+            </div>
+            <!-- Ganhos -->
+            <div class="dash-card verde">
+                <div class="dash-card-ico"><i class="fas fa-trophy"></i></div>
+                <div class="dash-card-label">Ganhos</div>
+                <div class="dash-card-num" id="dm-gan-qtd">—</div>
+                <div class="dash-card-val" id="dm-gan-val">—</div>
+                <div class="dash-card-sub">negócios fechados</div>
+            </div>
+            <!-- Perdidos -->
+            <div class="dash-card verm">
+                <div class="dash-card-ico"><i class="fas fa-times-circle"></i></div>
+                <div class="dash-card-label">Perdidos</div>
+                <div class="dash-card-num" id="dm-per-qtd">—</div>
+                <div class="dash-card-val" id="dm-per-val">—</div>
+                <div class="dash-card-sub">negócios encerrados</div>
+            </div>
+            <!-- Taxa de Ganho -->
+            <div class="dash-card amber">
+                <div class="dash-card-ico"><i class="fas fa-percent"></i></div>
+                <div class="dash-card-label">Taxa de Ganho</div>
+                <div style="margin-top:6px;">
+                    <div class="taxa-row">
+                        <div class="taxa-lbl">
+                            <span>Por quantidade</span>
+                            <span id="dm-taxa-qtd-pct" style="font-weight:700;color:#d97706;">—</span>
+                        </div>
+                        <div class="taxa-bar">
+                            <div class="taxa-fill verde" id="dm-taxa-qtd-bar" style="width:0%;"></div>
+                        </div>
+                    </div>
+                    <div class="taxa-row">
+                        <div class="taxa-lbl">
+                            <span>Por valor</span>
+                            <span id="dm-taxa-val-pct" style="font-weight:700;color:#d97706;">—</span>
+                        </div>
+                        <div class="taxa-bar">
+                            <div class="taxa-fill verde" id="dm-taxa-val-bar" style="width:0%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de negócios recentes -->
+        <div class="dash-table" id="dash-tabela" style="display:none;">
+            <div class="dash-table-head">
+                <span>Negócio</span>
+                <span>Empresa</span>
+                <span>Valor</span>
+                <span>Status</span>
+            </div>
+            <div id="dash-tabela-body"></div>
         </div>
     </div>
 
@@ -1539,7 +1714,8 @@ function navegar(pagina, elClicado) {
     if (elClicado) elClicado.classList.add('active');
 
     // Ações específicas por página
-    if (pagina === 'historico') renderHistorico();
+    if (pagina === 'dashboard')  carregarDashboard();
+    if (pagina === 'historico')  renderHistorico();
     if (pagina === 'configuracoes') {
         document.getElementById('cfg-nome').value = lerConfig().nome || '';
         if (sessaoAtual?.role === 'admin') renderizarListaUsuarios();
@@ -1552,11 +1728,11 @@ function navegar(pagina, elClicado) {
 // Atalhos usados pelos botões do dashboard
 function navParaNova() {
     const btns = document.querySelectorAll('.nav-item');
-    navegar('nova-visita', btns[1]);
+    navegar('nova-visita', btns[2]);
 }
 function navParaHistorico() {
     const btns = document.querySelectorAll('.nav-item');
-    navegar('historico', btns[2]);
+    navegar('historico', btns[3]);
 }
 
 // =========================================================
@@ -1858,7 +2034,7 @@ function editarVisita(id) {
     // Navega para o formulário
     document.getElementById('form-titulo').textContent = 'Editar Visita — ' + v.empresa;
     const btns = document.querySelectorAll('.nav-item');
-    navegar('nova-visita', btns[1]);
+    navegar('nova-visita', btns[2]);
     toast('Visita carregada para edição.', 'ok');
 }
 
@@ -2870,6 +3046,228 @@ function fecharAgendor() {
 }
 function fecharAgendorFora(e) {
     if (e.target === document.getElementById('modal-agendor')) fecharAgendor();
+}
+
+// =========================================================
+// DASHBOARD — NEGÓCIOS DO AGENDOR
+// =========================================================
+
+const DASH_CACHE_KEY = 'agendor-dash-deals-cache';
+const DASH_CACHE_TTL = 30 * 60 * 1000; // 30 minutos
+
+let dashDeals = []; // todos os deals carregados
+
+// ---------------------------------------------------------
+// Carrega o dashboard ao navegar para ele
+// ---------------------------------------------------------
+async function carregarDashboard() {
+    // Define período padrão: primeiro dia do mês atual até hoje
+    const hoje = new Date();
+    if (!document.getElementById('dash-ini').value) {
+        document.getElementById('dash-ini').value =
+            hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2,'0') + '-01';
+    }
+    if (!document.getElementById('dash-fim').value) {
+        document.getElementById('dash-fim').value = hoje.toISOString().split('T')[0];
+    }
+
+    // Verifica cache
+    const cacheRaw = localStorage.getItem(DASH_CACHE_KEY);
+    if (cacheRaw) {
+        const cache = JSON.parse(cacheRaw);
+        if (Date.now() - cache.timestamp < DASH_CACHE_TTL && cache.deals.length > 0) {
+            dashDeals = cache.deals;
+            mostrarInfoCache(cache.timestamp, cache.deals.length);
+            renderizarMetricas();
+            return;
+        }
+    }
+
+    await buscarTodosNegociosDash();
+}
+
+// ---------------------------------------------------------
+// Busca todos os negócios da conta (paginado)
+// ---------------------------------------------------------
+async function buscarTodosNegociosDash() {
+    document.getElementById('dash-loading').style.display = 'block';
+    document.getElementById('dash-cards').style.display  = 'none';
+    document.getElementById('dash-tabela').style.display = 'none';
+    document.getElementById('dash-erro').style.display   = 'none';
+    document.getElementById('dash-cache-info').textContent = '';
+
+    dashDeals = [];
+    let pagina = 1, total = 0;
+
+    try {
+        while (true) {
+            document.getElementById('dash-loading-txt').textContent =
+                `Carregando página ${pagina}… (${dashDeals.length} negócios)`;
+
+            const resp = await fetch(`${AGENDOR_PROXY}/deals/all?page=${pagina}&per_page=100`);
+            if (!resp.ok) {
+                const e = await resp.json().catch(() => ({}));
+                throw new Error(e.erro || `HTTP ${resp.status}`);
+            }
+
+            const dados = await resp.json();
+            const lista = Array.isArray(dados) ? dados : (dados.data || []);
+            if (pagina === 1) total = dados.meta?.totalCount || lista.length;
+
+            if (lista.length === 0) break;
+            dashDeals.push(...lista);
+
+            // Atualiza barra de progresso
+            const pct = total > 0 ? Math.min(Math.round(dashDeals.length / total * 100), 100) : 0;
+            document.getElementById('dash-progress-bar').style.width = pct + '%';
+
+            if (!dados.links?.next || dashDeals.length >= total) break;
+
+            await new Promise(r => setTimeout(r, 260)); // respeita rate limit
+            pagina++;
+        }
+
+        // Salva cache
+        localStorage.setItem(DASH_CACHE_KEY, JSON.stringify({
+            timestamp: Date.now(),
+            deals: dashDeals
+        }));
+
+        mostrarInfoCache(Date.now(), dashDeals.length);
+        renderizarMetricas();
+
+    } catch (erro) {
+        document.getElementById('dash-erro').style.display = 'block';
+        document.getElementById('dash-erro').textContent =
+            '⚠ Não foi possível carregar os negócios: ' + erro.message;
+    } finally {
+        document.getElementById('dash-loading').style.display = 'none';
+    }
+}
+
+// ---------------------------------------------------------
+// Formata valor monetário
+// ---------------------------------------------------------
+function fmtValor(n) {
+    if (!n && n !== 0) return '—';
+    return 'R$ ' + Number(n).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2, maximumFractionDigits: 2
+    });
+}
+
+// ---------------------------------------------------------
+// Aplica filtro de data e renderiza métricas
+// ---------------------------------------------------------
+function aplicarFiltroDash() { renderizarMetricas(); }
+
+function limparFiltroDash() {
+    document.getElementById('dash-ini').value = '';
+    document.getElementById('dash-fim').value = '';
+    renderizarMetricas();
+}
+
+function renderizarMetricas() {
+    const iniStr = document.getElementById('dash-ini').value;
+    const fimStr = document.getElementById('dash-fim').value;
+    const ini = iniStr ? new Date(iniStr + 'T00:00:00') : null;
+    const fim = fimStr ? new Date(fimStr + 'T23:59:59') : null;
+
+    // Filtra por data de início do negócio
+    const filtrados = dashDeals.filter(d => {
+        const dt = new Date(d.startTime || d.createdAt || 0);
+        if (ini && dt < ini) return false;
+        if (fim && dt > fim) return false;
+        return true;
+    });
+
+    // Agrupa por status
+    const andamento = filtrados.filter(d => d.dealStatus?.id === 1 || (!d.wonAt && !d.lostAt));
+    const ganhos    = filtrados.filter(d => d.dealStatus?.id === 2 || d.wonAt);
+    const perdidos  = filtrados.filter(d => d.dealStatus?.id === 3 || d.lostAt);
+
+    const soma = arr => arr.reduce((acc, d) => acc + (d.value || 0), 0);
+    const vAnd = soma(andamento);
+    const vGan = soma(ganhos);
+    const vPer = soma(perdidos);
+
+    // Taxa de ganho por quantidade
+    const totalDecidido = ganhos.length + perdidos.length;
+    const taxaQtd = totalDecidido > 0 ? Math.round(ganhos.length / totalDecidido * 100) : 0;
+
+    // Taxa de ganho por valor
+    const totalValDecidido = vGan + vPer;
+    const taxaVal = totalValDecidido > 0 ? Math.round(vGan / totalValDecidido * 100) : 0;
+
+    // Atualiza cards
+    document.getElementById('dm-and-qtd').textContent = andamento.length;
+    document.getElementById('dm-and-val').textContent = fmtValor(vAnd);
+    document.getElementById('dm-gan-qtd').textContent = ganhos.length;
+    document.getElementById('dm-gan-val').textContent = fmtValor(vGan);
+    document.getElementById('dm-per-qtd').textContent = perdidos.length;
+    document.getElementById('dm-per-val').textContent = fmtValor(vPer);
+
+    document.getElementById('dm-taxa-qtd-pct').textContent = taxaQtd + '%';
+    document.getElementById('dm-taxa-val-pct').textContent = taxaVal + '%';
+    document.getElementById('dm-taxa-qtd-bar').style.width = taxaQtd + '%';
+    document.getElementById('dm-taxa-val-bar').style.width = taxaVal + '%';
+
+    // Mostra os cards
+    document.getElementById('dash-cards').style.display = 'grid';
+
+    // Tabela dos 20 mais recentes (ordenados por data)
+    const recentes = [...filtrados]
+        .sort((a, b) => new Date(b.startTime || b.createdAt || 0) - new Date(a.startTime || a.createdAt || 0))
+        .slice(0, 20);
+
+    renderizarTabelaDash(recentes);
+}
+
+// ---------------------------------------------------------
+// Tabela dos negócios recentes
+// ---------------------------------------------------------
+function renderizarTabelaDash(lista) {
+    if (lista.length === 0) {
+        document.getElementById('dash-tabela').style.display = 'none';
+        return;
+    }
+
+    const mapStatus = d => {
+        const id = d.dealStatus?.id;
+        if (id === 2 || d.wonAt)  return '<span class="ds-status ds-ganho">✓ Ganho</span>';
+        if (id === 3 || d.lostAt) return '<span class="ds-status ds-perdido">✗ Perdido</span>';
+        return '<span class="ds-status ds-andamento">↻ Andamento</span>';
+    };
+
+    document.getElementById('dash-tabela-body').innerHTML = lista.map(d => `
+        <div class="dash-table-row">
+            <div style="font-size:13px;font-weight:600;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.title||''}">
+                ${d.title || '—'}
+            </div>
+            <div style="font-size:12px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                ${d.organization?.name || '—'}
+            </div>
+            <div style="font-size:13px;font-weight:600;color:#0f172a;">${fmtValor(d.value)}</div>
+            <div>${mapStatus(d)}</div>
+        </div>`
+    ).join('');
+
+    document.getElementById('dash-tabela').style.display = 'block';
+}
+
+// ---------------------------------------------------------
+// Info do cache (última atualização)
+// ---------------------------------------------------------
+function mostrarInfoCache(timestamp, total) {
+    const dt = new Date(timestamp).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('dash-cache-info').textContent =
+        `${total} negócios · Atualizado às ${dt}`;
+}
+
+// Botão de recarregar (limpa cache e rebusca)
+function recarregarDash() {
+    localStorage.removeItem(DASH_CACHE_KEY);
+    dashDeals = [];
+    buscarTodosNegociosDash();
 }
 
 // =========================================================

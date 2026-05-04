@@ -30,6 +30,21 @@ export default {
     const url  = new URL(request.url);
     const path = url.pathname;
 
+    // ── Rota: TODOS os negócios da conta (para Dashboard) ────────
+    if (path === '/deals/all') {
+      const page    = url.searchParams.get('page')     || '1';
+      const perPage = url.searchParams.get('per_page') || '100';
+      try {
+        const r = await fetch(
+          `https://api.agendor.com.br/v3/deals?page=${page}&per_page=${perPage}`,
+          { headers: { 'Authorization': `Token ${env.AGENDOR_TOKEN}` } }
+        );
+        return resp(await r.json(), r.status, cors);
+      } catch (e) {
+        return resp({ erro: 'Falha ao buscar negócios: ' + e.message }, 502, cors);
+      }
+    }
+
     // ── Rota: dados básicos de um negócio (com organization.people) ──
     if (path === '/deal') {
       const dealId = url.searchParams.get('id');
