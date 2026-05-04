@@ -1008,39 +1008,6 @@ input[type="range"]::-webkit-slider-thumb {
                 <div class="dash-card-val" id="dm-ini-val">—</div>
                 <div class="dash-card-sub">total no período</div>
             </div>
-            <!-- 3º: Perdidos -->
-            <div class="dash-card verm">
-                <div class="dash-card-ico"><i class="fas fa-times-circle"></i></div>
-                <div class="dash-card-label">Perdidos</div>
-                <div class="dash-card-num" id="dm-per-qtd">—</div>
-                <div class="dash-card-val" id="dm-per-val">—</div>
-                <div class="dash-card-sub">negócios encerrados</div>
-            </div>
-            <!-- Taxa de Ganho -->
-            <div class="dash-card amber">
-                <div class="dash-card-ico"><i class="fas fa-percent"></i></div>
-                <div class="dash-card-label">Taxa de Ganho</div>
-                <div style="margin-top:6px;">
-                    <div class="taxa-row">
-                        <div class="taxa-lbl">
-                            <span>Por quantidade</span>
-                            <span id="dm-taxa-qtd-pct" style="font-weight:700;color:#d97706;">—</span>
-                        </div>
-                        <div class="taxa-bar">
-                            <div class="taxa-fill verde" id="dm-taxa-qtd-bar" style="width:0%;"></div>
-                        </div>
-                    </div>
-                    <div class="taxa-row">
-                        <div class="taxa-lbl">
-                            <span>Por valor</span>
-                            <span id="dm-taxa-val-pct" style="font-weight:700;color:#d97706;">—</span>
-                        </div>
-                        <div class="taxa-bar">
-                            <div class="taxa-fill verde" id="dm-taxa-val-bar" style="width:0%;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Tabela de negócios recentes -->
@@ -3197,21 +3164,15 @@ function renderizarMetricas() {
         return true;
     };
 
-    // Ganhos: dealStatus=2; filtra pela última atualização (updatedAt)
+    // Ganhos: dealStatus.id=2 + wonAt obrigatoriamente preenchido + dentro do período
     const ganhos = dashDeals.filter(d => {
-        if (d.dealStatus?.id !== 2) return false;
+        if (d.dealStatus?.id !== 2) return false; // só status "Ganho"
+        if (!d.wonAt) return false;               // ignora sem wonAt
         if (semFiltro) return true;
-        return dentro(d.updatedAt);
+        return dentro(d.wonAt);                   // filtra pela data de ganho
     });
 
-    // Perdidos: dealStatus=3; filtra pela última atualização (updatedAt)
-    const perdidos = dashDeals.filter(d => {
-        if (d.dealStatus?.id !== 3) return false;
-        if (semFiltro) return true;
-        return dentro(d.updatedAt);
-    });
-
-    // Iniciados: todos os deals; filtra pela data de início (startTime)
+    // Iniciados: todos os deals com startTime no período
     const iniciados = dashDeals.filter(d => {
         if (semFiltro) return true;
         return dentro(d.startTime);
@@ -3219,29 +3180,13 @@ function renderizarMetricas() {
 
     const soma = arr => arr.reduce((acc, d) => acc + (d.value || 0), 0);
     const vGan = soma(ganhos);
-    const vPer = soma(perdidos);
     const vIni = soma(iniciados);
-
-    // Taxa de ganho por quantidade
-    const totalDecidido = ganhos.length + perdidos.length;
-    const taxaQtd = totalDecidido > 0 ? Math.round(ganhos.length / totalDecidido * 100) : 0;
-
-    // Taxa de ganho por valor
-    const totalValDecidido = vGan + vPer;
-    const taxaVal = totalValDecidido > 0 ? Math.round(vGan / totalValDecidido * 100) : 0;
 
     // Atualiza cards
     document.getElementById('dm-gan-qtd').textContent = ganhos.length;
     document.getElementById('dm-gan-val').textContent = fmtValor(vGan);
     document.getElementById('dm-ini-qtd').textContent = iniciados.length;
     document.getElementById('dm-ini-val').textContent = fmtValor(vIni);
-    document.getElementById('dm-per-qtd').textContent = perdidos.length;
-    document.getElementById('dm-per-val').textContent = fmtValor(vPer);
-
-    document.getElementById('dm-taxa-qtd-pct').textContent = taxaQtd + '%';
-    document.getElementById('dm-taxa-val-pct').textContent = taxaVal + '%';
-    document.getElementById('dm-taxa-qtd-bar').style.width = taxaQtd + '%';
-    document.getElementById('dm-taxa-val-bar').style.width = taxaVal + '%';
 
     // Mostra os cards
     document.getElementById('dash-cards').style.display = 'grid';
