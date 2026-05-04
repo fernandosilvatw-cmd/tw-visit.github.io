@@ -992,13 +992,16 @@ input[type="range"]::-webkit-slider-thumb {
 
         <!-- Cards de métricas -->
         <div class="dash-cards" id="dash-cards" style="display:none;">
-            <!-- 1º: Ganhos -->
-            <div class="dash-card verde">
+            <!-- 1º: Ganhos — clicável para ver a lista -->
+            <div class="dash-card verde" onclick="abrirListaGanhos()"
+                 style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;"
+                 onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(22,163,74,0.2)';"
+                 onmouseout="this.style.transform='';this.style.boxShadow='';">
                 <div class="dash-card-ico"><i class="fas fa-trophy"></i></div>
-                <div class="dash-card-label">Ganhos</div>
+                <div class="dash-card-label">Ganhos <i class="fas fa-external-link-alt" style="font-size:9px;opacity:0.6;margin-left:4px;"></i></div>
                 <div class="dash-card-num" id="dm-gan-qtd">—</div>
                 <div class="dash-card-val" id="dm-gan-val">—</div>
-                <div class="dash-card-sub">negócios fechados</div>
+                <div class="dash-card-sub">clique para ver a lista</div>
             </div>
             <!-- 2º: Negócios Iniciados (total do período) -->
             <div class="dash-card azul">
@@ -1498,6 +1501,50 @@ input[type="range"]::-webkit-slider-thumb {
                     <!-- Populado pelo JS -->
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ======================================================
+         PÁGINA: NEGÓCIOS GANHOS (drill-down do dashboard)
+         ====================================================== -->
+    <div class="page-section" id="page-ganhos">
+        <div class="page-header" style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="voltarDashboard()" style="margin-top:4px;flex-shrink:0;">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </button>
+            <div>
+                <h1>Negócios Ganhos</h1>
+                <p id="ganhos-subtitulo">—</p>
+            </div>
+        </div>
+
+        <!-- Resumo rápido -->
+        <div style="display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;">
+            <div style="background:white;border-radius:10px;padding:14px 22px;box-shadow:0 1px 3px rgba(0,0,0,0.07);display:flex;gap:14px;align-items:center;">
+                <i class="fas fa-trophy" style="color:#16a34a;font-size:20px;"></i>
+                <div>
+                    <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Total de Negócios</div>
+                    <div style="font-size:24px;font-weight:800;color:#0f172a;" id="ganhos-total-qtd">—</div>
+                </div>
+            </div>
+            <div style="background:white;border-radius:10px;padding:14px 22px;box-shadow:0 1px 3px rgba(0,0,0,0.07);display:flex;gap:14px;align-items:center;">
+                <i class="fas fa-dollar-sign" style="color:#16a34a;font-size:20px;"></i>
+                <div>
+                    <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Valor Total</div>
+                    <div style="font-size:24px;font-weight:800;color:#0f172a;" id="ganhos-total-val">—</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de ganhos -->
+        <div class="dash-table" id="ganhos-tabela">
+            <div style="display:grid;grid-template-columns:2.5fr 1.5fr 1fr 1fr;background:#f8fafc;padding:10px 18px;border-bottom:1px solid #f1f5f9;">
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Negócio</span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Empresa</span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Data do Ganho</span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Valor</span>
+            </div>
+            <div id="ganhos-lista-body"></div>
         </div>
     </div>
 
@@ -3020,6 +3067,7 @@ function fecharAgendorFora(e) {
 // =========================================================
 
 const DASH_CACHE_KEY = 'agendor-dash-deals-cache';
+let dashGanhos = []; // deals ganhos do período atual (para drill-down)
 const DASH_CACHE_TTL = 30 * 60 * 1000; // 30 minutos
 
 let dashDeals = []; // todos os deals carregados
@@ -3182,6 +3230,9 @@ function renderizarMetricas() {
     const vGan = soma(ganhos);
     const vIni = soma(iniciados);
 
+    // Salva para o drill-down
+    dashGanhos = ganhos;
+
     // Atualiza cards
     document.getElementById('dm-gan-qtd').textContent = ganhos.length;
     document.getElementById('dm-gan-val').textContent = fmtValor(vGan);
@@ -3238,6 +3289,78 @@ function mostrarInfoCache(timestamp, total) {
     const dt = new Date(timestamp).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
     document.getElementById('dash-cache-info').textContent =
         `${total} negócios · Atualizado às ${dt}`;
+}
+
+// ---------------------------------------------------------
+// DRILL-DOWN: abre a lista de negócios ganhos
+// ---------------------------------------------------------
+function abrirListaGanhos() {
+    if (dashGanhos.length === 0) {
+        toast('Carregue o dashboard primeiro.', 'err');
+        return;
+    }
+
+    // Subtítulo com período selecionado
+    const ini = document.getElementById('dash-ini').value;
+    const fim = document.getElementById('dash-fim').value;
+    const periodo = ini && fim
+        ? `Período: ${fmtData(ini)} a ${fmtData(fim)}`
+        : ini ? `A partir de ${fmtData(ini)}`
+        : fim ? `Até ${fmtData(fim)}`
+        : 'Todos os períodos';
+    document.getElementById('ganhos-subtitulo').textContent = periodo;
+
+    // Totais
+    const total = dashGanhos.length;
+    const valor = dashGanhos.reduce((acc, d) => acc + (d.value || 0), 0);
+    document.getElementById('ganhos-total-qtd').textContent = total;
+    document.getElementById('ganhos-total-val').textContent = fmtValor(valor);
+
+    // Ordena por wonAt mais recente
+    const ordenados = [...dashGanhos].sort(
+        (a, b) => new Date(b.wonAt || 0) - new Date(a.wonAt || 0)
+    );
+
+    // Renderiza tabela
+    const fmtDt = s => s
+        ? new Date(s).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' })
+        : '—';
+
+    document.getElementById('ganhos-lista-body').innerHTML = ordenados.map(d => `
+        <div style="display:grid;grid-template-columns:2.5fr 1.5fr 1fr 1fr;padding:11px 18px;
+                    border-bottom:1px solid #f8fafc;align-items:center;transition:background 0.12s;"
+             onmouseover="this.style.background='#f0fdf4';"
+             onmouseout="this.style.background='';">
+            <div style="font-size:13px;font-weight:600;color:#0f172a;
+                        overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.title||''}">
+                ${d.title || '—'}
+            </div>
+            <div style="font-size:12px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                 title="${d.organization?.name||''}">
+                ${d.organization?.name || '—'}
+            </div>
+            <div style="font-size:12px;color:#16a34a;font-weight:600;">
+                ${fmtDt(d.wonAt)}
+            </div>
+            <div style="font-size:13px;font-weight:700;color:#0f172a;">
+                ${fmtValor(d.value)}
+            </div>
+        </div>`
+    ).join('');
+
+    // Navega para a página (sem alterar sidebar)
+    document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-ganhos').classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+function voltarDashboard() {
+    document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-dashboard').classList.add('active');
+    // Mantém o item Dashboard ativo na sidebar
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.nav-item')[1].classList.add('active');
+    window.scrollTo(0, 0);
 }
 
 // Botão de recarregar (limpa cache e rebusca)
