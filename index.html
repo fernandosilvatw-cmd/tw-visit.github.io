@@ -992,15 +992,7 @@ input[type="range"]::-webkit-slider-thumb {
 
         <!-- Cards de métricas -->
         <div class="dash-cards" id="dash-cards" style="display:none;">
-            <!-- Em Andamento -->
-            <div class="dash-card azul">
-                <div class="dash-card-ico"><i class="fas fa-sync-alt"></i></div>
-                <div class="dash-card-label">Em Andamento</div>
-                <div class="dash-card-num" id="dm-and-qtd">—</div>
-                <div class="dash-card-val" id="dm-and-val">—</div>
-                <div class="dash-card-sub">negócios ativos</div>
-            </div>
-            <!-- Ganhos -->
+            <!-- 1º: Ganhos -->
             <div class="dash-card verde">
                 <div class="dash-card-ico"><i class="fas fa-trophy"></i></div>
                 <div class="dash-card-label">Ganhos</div>
@@ -1008,7 +1000,15 @@ input[type="range"]::-webkit-slider-thumb {
                 <div class="dash-card-val" id="dm-gan-val">—</div>
                 <div class="dash-card-sub">negócios fechados</div>
             </div>
-            <!-- Perdidos -->
+            <!-- 2º: Negócios Iniciados (total do período) -->
+            <div class="dash-card azul">
+                <div class="dash-card-ico"><i class="fas fa-rocket"></i></div>
+                <div class="dash-card-label">Negócios Iniciados</div>
+                <div class="dash-card-num" id="dm-ini-qtd">—</div>
+                <div class="dash-card-val" id="dm-ini-val">—</div>
+                <div class="dash-card-sub">total no período</div>
+            </div>
+            <!-- 3º: Perdidos -->
             <div class="dash-card verm">
                 <div class="dash-card-ico"><i class="fas fa-times-circle"></i></div>
                 <div class="dash-card-label">Perdidos</div>
@@ -3195,14 +3195,15 @@ function renderizarMetricas() {
     });
 
     // Agrupa por status
-    const andamento = filtrados.filter(d => d.dealStatus?.id === 1 || (!d.wonAt && !d.lostAt));
-    const ganhos    = filtrados.filter(d => d.dealStatus?.id === 2 || d.wonAt);
-    const perdidos  = filtrados.filter(d => d.dealStatus?.id === 3 || d.lostAt);
+    const ganhos  = filtrados.filter(d => d.dealStatus?.id === 2 || d.wonAt);
+    const perdidos = filtrados.filter(d => d.dealStatus?.id === 3 || d.lostAt);
+    // Iniciados = todos os negócios do período (independente do status)
+    const iniciados = filtrados;
 
     const soma = arr => arr.reduce((acc, d) => acc + (d.value || 0), 0);
-    const vAnd = soma(andamento);
     const vGan = soma(ganhos);
     const vPer = soma(perdidos);
+    const vIni = soma(iniciados);
 
     // Taxa de ganho por quantidade
     const totalDecidido = ganhos.length + perdidos.length;
@@ -3213,10 +3214,10 @@ function renderizarMetricas() {
     const taxaVal = totalValDecidido > 0 ? Math.round(vGan / totalValDecidido * 100) : 0;
 
     // Atualiza cards
-    document.getElementById('dm-and-qtd').textContent = andamento.length;
-    document.getElementById('dm-and-val').textContent = fmtValor(vAnd);
     document.getElementById('dm-gan-qtd').textContent = ganhos.length;
     document.getElementById('dm-gan-val').textContent = fmtValor(vGan);
+    document.getElementById('dm-ini-qtd').textContent = iniciados.length;
+    document.getElementById('dm-ini-val').textContent = fmtValor(vIni);
     document.getElementById('dm-per-qtd').textContent = perdidos.length;
     document.getElementById('dm-per-val').textContent = fmtValor(vPer);
 
