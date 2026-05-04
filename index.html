@@ -3115,7 +3115,21 @@ async function buscarTodosNegociosDash() {
             if (pagina === 1) total = dados.meta?.totalCount || lista.length;
 
             if (lista.length === 0) break;
-            dashDeals.push(...lista);
+
+            // Guarda apenas os campos usados no dashboard (~200 bytes/deal em vez de ~15 KB)
+            // Isso evita estourar o limite de 5 MB do localStorage
+            const slim = lista.map(d => ({
+                id:          d.id,
+                title:       d.title || d.name || '',
+                value:       d.value || 0,
+                dealStatus:  { id: d.dealStatus?.id, name: d.dealStatus?.name },
+                startTime:   d.startTime  || null,
+                createdAt:   d.createdAt  || null,
+                wonAt:       d.wonAt      || null,
+                lostAt:      d.lostAt     || null,
+                organization:{ name: d.organization?.name || '' },
+            }));
+            dashDeals.push(...slim);
 
             // Atualiza barra de progresso
             const pct = total > 0 ? Math.min(Math.round(dashDeals.length / total * 100), 100) : 0;
