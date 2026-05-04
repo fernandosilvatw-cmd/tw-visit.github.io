@@ -616,9 +616,169 @@ input[type="range"]::-webkit-slider-thumb {
     .modal-head, .modal-foot { display: none !important; }
     .modal-body { padding: 24px !important; }
 }
+
+/* ============================================================
+   AUTENTICAÇÃO
+   ============================================================ */
+#tela-login {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #f1f5f9;
+    display: flex; align-items: center; justify-content: center;
+}
+.login-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    padding: 40px 36px;
+    width: 100%; max-width: 400px;
+}
+.login-logo {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 28px;
+}
+.login-logo .ico {
+    width: 48px; height: 48px; background: #2563eb;
+    border-radius: 12px; display: flex; align-items: center;
+    justify-content: center; color: white; font-size: 22px;
+}
+.login-logo .brand { font-size: 20px; font-weight: 800; color: #1a2333; }
+.login-logo .tagline { font-size: 9px; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; }
+.login-card h2 { font-size: 17px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+.login-card p  { font-size: 13px; color: #64748b; margin-bottom: 24px; }
+.login-erro { background: #fee2e2; color: #b91c1c; font-size: 13px; font-weight: 500;
+    padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; display: none; }
+.login-erro.show { display: block; }
+
+/* User info no rodapé da sidebar */
+.sidebar-user {
+    padding: 14px 14px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; gap: 10px;
+}
+.sidebar-user .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: #2563eb; color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; flex-shrink: 0;
+}
+.sidebar-user .info .nome { font-size: 12px; font-weight: 600; color: white; }
+.sidebar-user .info .role { font-size: 10px; color: #64748b; }
+
+/* Tabela de usuários */
+.user-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px solid #f1f5f9; gap: 12px;
+}
+.user-row:last-child { border-bottom: none; }
+.user-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+.user-badge.admin { background: #dbeafe; color: #1d4ed8; }
+.user-badge.user  { background: #f1f5f9; color: #64748b; }
+.user-badge.novo  { background: #fef3c7; color: #b45309; }
     </style>
 </head>
 <body>
+
+<!-- ============================================================
+     TELA DE LOGIN (cobre tudo até autenticar)
+     ============================================================ -->
+<div id="tela-login">
+    <div class="login-card">
+        <div class="login-logo">
+            <div class="ico"><i class="fas fa-earth-americas"></i></div>
+            <div>
+                <div class="brand">TECWISE</div>
+                <div class="tagline">INNOVACIÓN DIGITAL</div>
+            </div>
+        </div>
+        <h2>Bem-vindo</h2>
+        <p>Acesse sua conta para continuar</p>
+        <div class="login-erro" id="login-erro"></div>
+        <div class="fg" style="margin-bottom:14px;">
+            <label>E-mail</label>
+            <input type="email" id="login-email" placeholder="seu@email.com"
+                autocomplete="username" onkeydown="if(event.key==='Enter')fazerLogin()">
+        </div>
+        <div class="fg" style="margin-bottom:22px;position:relative;">
+            <label>Senha</label>
+            <input type="password" id="login-senha" placeholder="••••••••"
+                autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLogin()">
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;"
+            onclick="fazerLogin()" id="login-btn">
+            <i class="fas fa-sign-in-alt"></i> Entrar
+        </button>
+    </div>
+</div>
+
+<!-- ============================================================
+     MODAL — REDEFINIR SENHA (1º acesso)
+     ============================================================ -->
+<div class="modal-overlay" id="modal-redef-senha">
+    <div class="modal-box" style="max-width:420px;">
+        <div class="modal-head">
+            <h2><i class="fas fa-key" style="color:#2563eb;margin-right:8px;"></i>Criar nova senha</h2>
+        </div>
+        <div class="modal-body" style="padding:24px;">
+            <p style="font-size:13px;color:#64748b;margin-bottom:20px;">
+                Este é seu primeiro acesso. Defina uma senha pessoal para continuar.
+            </p>
+            <div class="fg" style="margin-bottom:14px;">
+                <label>Nova Senha (mín. 6 caracteres)</label>
+                <input type="password" id="redef-nova" placeholder="Nova senha"
+                    onkeydown="if(event.key==='Enter')confirmarRedefinicao()">
+            </div>
+            <div class="fg" style="margin-bottom:20px;">
+                <label>Confirmar Nova Senha</label>
+                <input type="password" id="redef-confirma" placeholder="Repita a senha"
+                    onkeydown="if(event.key==='Enter')confirmarRedefinicao()">
+            </div>
+            <div class="login-erro" id="redef-erro" style="margin-bottom:14px;"></div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center;"
+                onclick="confirmarRedefinicao()">
+                <i class="fas fa-check"></i> Salvar nova senha e entrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     MODAL — NOVO USUÁRIO (admin)
+     ============================================================ -->
+<div class="modal-overlay" id="modal-novo-usuario" onclick="fecharNovoUsuarioFora(event)">
+    <div class="modal-box" style="max-width:440px;">
+        <div class="modal-head">
+            <h2><i class="fas fa-user-plus" style="color:#2563eb;margin-right:8px;"></i>Novo Usuário</h2>
+            <button class="btn-close" onclick="fecharNovoUsuario()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="padding:24px;">
+            <div class="fg" style="margin-bottom:14px;">
+                <label>Nome completo</label>
+                <input type="text" id="nu-nome" placeholder="Nome do usuário">
+            </div>
+            <div class="fg" style="margin-bottom:14px;">
+                <label>E-mail</label>
+                <input type="email" id="nu-email" placeholder="email@tecwiselatam.com">
+            </div>
+            <div class="fg" style="margin-bottom:8px;">
+                <label>Senha temporária</label>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="nu-senha" placeholder="Gerada automaticamente" style="flex:1;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="gerarSenhaNovamente()" title="Gerar nova senha">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <p style="font-size:11px;color:#94a3b8;margin-bottom:20px;">
+                <i class="fas fa-info-circle"></i> O usuário receberá esta senha e deverá redefini-la no primeiro acesso.
+            </p>
+            <div class="login-erro" id="nu-erro" style="margin-bottom:14px;"></div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center;"
+                onclick="criarNovoUsuario()">
+                <i class="fas fa-user-plus"></i> Criar Usuário
+            </button>
+        </div>
+    </div>
+</div>
 
 <!-- Overlay escuro ao abrir sidebar no mobile -->
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="fecharSidebar()"></div>
@@ -638,6 +798,15 @@ input[type="range"]::-webkit-slider-thumb {
                 <div class="brand">TECWISE</div>
                 <div class="tagline">INNOVACIÓN DIGITAL</div>
             </div>
+        </div>
+    </div>
+
+    <!-- Usuário logado -->
+    <div class="sidebar-user" id="sidebar-user">
+        <div class="avatar" id="sidebar-avatar">?</div>
+        <div class="info">
+            <div class="nome" id="sidebar-user-nome">—</div>
+            <div class="role" id="sidebar-user-role">—</div>
         </div>
     </div>
 
@@ -1170,6 +1339,24 @@ input[type="range"]::-webkit-slider-thumb {
                 </div>
             </div>
         </div>
+
+        <!-- GERENCIAR USUÁRIOS (somente admin) -->
+        <div class="form-section" id="cfg-usuarios-section" style="display:none;max-width:680px;">
+            <div class="section-header">
+                <div class="sec-icon"><i class="fas fa-users"></i></div>
+                <h3>Gerenciar Usuários</h3>
+            </div>
+            <div class="section-body">
+                <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+                    <button class="btn btn-primary btn-sm" onclick="abrirNovoUsuario()">
+                        <i class="fas fa-user-plus"></i> Novo Usuário
+                    </button>
+                </div>
+                <div id="usuarios-lista">
+                    <!-- Populado pelo JS -->
+                </div>
+            </div>
+        </div>
     </div>
 
 </main><!-- fim main-content -->
@@ -1283,8 +1470,14 @@ let visitaEmEdicao = null; // null = nova visita; string = ID sendo editado
 // =========================================================
 // INICIALIZAÇÃO — executa quando a página carrega
 // =========================================================
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
+    // Inicializa autenticação — se não autenticado, para aqui
+    const autenticado = await inicializarAuth();
+    if (!autenticado) return;
+    inicializarApp();
+});
 
+function inicializarApp() {
     // Define data de hoje como padrão
     document.getElementById('f-data').value = hoje();
 
@@ -1300,7 +1493,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Atualiza os 4 cards de resumo
     atualizarCards();
-});
+}
 
 // =========================================================
 // UTILITÁRIOS
@@ -1349,6 +1542,7 @@ function navegar(pagina, elClicado) {
     if (pagina === 'historico') renderHistorico();
     if (pagina === 'configuracoes') {
         document.getElementById('cfg-nome').value = lerConfig().nome || '';
+        if (sessaoAtual?.role === 'admin') renderizarListaUsuarios();
     }
 
     fecharSidebar(); // fecha sidebar no mobile ao navegar
@@ -1929,9 +2123,7 @@ function confirmarLimparTudo() {
 }
 
 function confirmarSaida() {
-    if (confirm('Deseja sair do sistema?')) {
-        toast('Até logo!');
-    }
+    if (confirm('Deseja sair do sistema?')) fazerLogout();
 }
 
 // Tecla ESC fecha qualquer modal aberto
@@ -2679,6 +2871,308 @@ function fecharAgendor() {
 function fecharAgendorFora(e) {
     if (e.target === document.getElementById('modal-agendor')) fecharAgendor();
 }
+
+// =========================================================
+// MÓDULO DE AUTENTICAÇÃO
+// =========================================================
+
+const AUTH_USERS_KEY   = 'tw-users';
+const AUTH_SESSION_KEY = 'tw-session';
+
+// Sessão do usuário logado no momento
+let sessaoAtual = null;
+
+// ---------------------------------------------------------
+// Hash SHA-256 (Web Crypto API — nativa no browser)
+// ---------------------------------------------------------
+async function hashSenha(senha) {
+    const dados = new TextEncoder().encode(senha);
+    const hash  = await crypto.subtle.digest('SHA-256', dados);
+    return Array.from(new Uint8Array(hash))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ---------------------------------------------------------
+// Leitura/gravação de usuários e sessão
+// ---------------------------------------------------------
+function lerUsuarios() {
+    return JSON.parse(localStorage.getItem(AUTH_USERS_KEY) || '[]');
+}
+function gravarUsuarios(users) {
+    localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users));
+}
+function lerSessao() {
+    return JSON.parse(localStorage.getItem(AUTH_SESSION_KEY) || 'null');
+}
+function gravarSessao(s) {
+    localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(s));
+}
+
+// ---------------------------------------------------------
+// Inicialização — verifica sessão ou mostra login
+// ---------------------------------------------------------
+async function inicializarAuth() {
+    // Cria o admin padrão se ainda não existir nenhum usuário
+    const users = lerUsuarios();
+    if (users.length === 0) {
+        const hash = await hashSenha('Fern9205');
+        gravarUsuarios([{
+            id: 1,
+            email: 'fernando.silva@tecwiselatam.com',
+            nome:  'Fernando Silva',
+            passwordHash:  hash,
+            role:          'admin',
+            primeiroAcesso: false,
+            criadoEm: new Date().toISOString()
+        }]);
+    }
+
+    const sessao = lerSessao();
+    if (sessao && sessao.email) {
+        sessaoAtual = sessao;
+        aplicarSessao(sessao);
+        ocultarTelaLogin();
+        return true;
+    }
+
+    mostrarTelaLogin();
+    return false;
+}
+
+function mostrarTelaLogin() {
+    document.getElementById('tela-login').style.display = 'flex';
+}
+function ocultarTelaLogin() {
+    document.getElementById('tela-login').style.display = 'none';
+}
+
+// ---------------------------------------------------------
+// Aplicar informações da sessão na UI
+// ---------------------------------------------------------
+function aplicarSessao(sessao) {
+    // Sidebar: avatar com inicial, nome e perfil
+    const inicial = (sessao.nome || '?')[0].toUpperCase();
+    document.getElementById('sidebar-avatar').textContent    = inicial;
+    document.getElementById('sidebar-user-nome').textContent = sessao.nome;
+    document.getElementById('sidebar-user-role').textContent =
+        sessao.role === 'admin' ? 'Administrador' : 'Usuário';
+
+    // Exibe a seção de gerenciar usuários só para admin
+    if (sessao.role === 'admin') {
+        document.getElementById('cfg-usuarios-section').style.display = 'block';
+    }
+}
+
+// ---------------------------------------------------------
+// Login
+// ---------------------------------------------------------
+async function fazerLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const senha = document.getElementById('login-senha').value;
+    const erroEl = document.getElementById('login-erro');
+    const btn    = document.getElementById('login-btn');
+
+    erroEl.classList.remove('show');
+    if (!email || !senha) {
+        erroEl.textContent = 'Preencha e-mail e senha.';
+        erroEl.classList.add('show');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+
+    try {
+        const users = lerUsuarios();
+        const user  = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+        if (!user) throw new Error('E-mail não encontrado.');
+
+        const hash = await hashSenha(senha);
+        if (hash !== user.passwordHash) throw new Error('Senha incorreta.');
+
+        sessaoAtual = { email: user.email, nome: user.nome, role: user.role, id: user.id };
+        gravarSessao(sessaoAtual);
+
+        if (user.primeiroAcesso) {
+            ocultarTelaLogin();
+            document.getElementById('modal-redef-senha').classList.add('open');
+        } else {
+            ocultarTelaLogin();
+            aplicarSessao(sessaoAtual);
+            inicializarApp();
+        }
+
+    } catch (e) {
+        erroEl.textContent = e.message;
+        erroEl.classList.add('show');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar';
+    }
+}
+
+// ---------------------------------------------------------
+// Redefinição de senha (primeiro acesso)
+// ---------------------------------------------------------
+async function confirmarRedefinicao() {
+    const nova     = document.getElementById('redef-nova').value;
+    const confirma = document.getElementById('redef-confirma').value;
+    const erroEl   = document.getElementById('redef-erro');
+
+    erroEl.classList.remove('show');
+
+    if (nova.length < 6) {
+        erroEl.textContent = 'A senha deve ter pelo menos 6 caracteres.';
+        erroEl.classList.add('show'); return;
+    }
+    if (nova !== confirma) {
+        erroEl.textContent = 'As senhas não coincidem.';
+        erroEl.classList.add('show'); return;
+    }
+
+    const hash  = await hashSenha(nova);
+    const users = lerUsuarios();
+    const idx   = users.findIndex(u => u.email === sessaoAtual.email);
+    if (idx !== -1) {
+        users[idx].passwordHash  = hash;
+        users[idx].primeiroAcesso = false;
+        gravarUsuarios(users);
+    }
+
+    document.getElementById('modal-redef-senha').classList.remove('open');
+    aplicarSessao(sessaoAtual);
+    inicializarApp();
+    toast('Senha definida com sucesso! Bem-vindo(a).', 'ok');
+}
+
+// ---------------------------------------------------------
+// Logout
+// ---------------------------------------------------------
+function fazerLogout() {
+    localStorage.removeItem(AUTH_SESSION_KEY);
+    sessaoAtual = null;
+    location.reload();
+}
+
+// ---------------------------------------------------------
+// Gerenciamento de usuários (admin)
+// ---------------------------------------------------------
+function renderizarListaUsuarios() {
+    const users = lerUsuarios();
+    const el    = document.getElementById('usuarios-lista');
+
+    el.innerHTML = users.map(u => `
+        <div class="user-row">
+            <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+                <div style="width:34px;height:34px;border-radius:50%;background:#2563eb;color:white;
+                            display:flex;align-items:center;justify-content:center;font-weight:700;
+                            font-size:13px;flex-shrink:0;">${(u.nome||'?')[0].toUpperCase()}</div>
+                <div style="min-width:0;">
+                    <div style="font-size:13px;font-weight:600;color:#0f172a;">${u.nome}</div>
+                    <div style="font-size:11px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${u.email}</div>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                <span class="user-badge ${u.role}">${u.role === 'admin' ? 'Admin' : 'Usuário'}</span>
+                ${u.primeiroAcesso ? '<span class="user-badge novo">Pendente</span>' : ''}
+                ${u.email !== sessaoAtual?.email ? `
+                <button class="btn btn-secondary btn-sm" onclick="resetarSenhaUsuario(${u.id})" title="Resetar senha">
+                    <i class="fas fa-key"></i>
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="excluirUsuario(${u.id})" title="Excluir">
+                    <i class="fas fa-trash"></i>
+                </button>` : '<span style="font-size:11px;color:#94a3b8;">(você)</span>'}
+            </div>
+        </div>`
+    ).join('');
+}
+
+// Abre modal de novo usuário
+function abrirNovoUsuario() {
+    document.getElementById('nu-nome').value  = '';
+    document.getElementById('nu-email').value = '';
+    document.getElementById('nu-erro').classList.remove('show');
+    gerarSenhaNovamente();
+    renderizarListaUsuarios();
+    document.getElementById('modal-novo-usuario').classList.add('open');
+}
+function fecharNovoUsuario() {
+    document.getElementById('modal-novo-usuario').classList.remove('open');
+}
+function fecharNovoUsuarioFora(e) {
+    if (e.target === document.getElementById('modal-novo-usuario')) fecharNovoUsuario();
+}
+
+// Gera senha temporária aleatória
+function gerarSenhaNovamente() {
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#';
+    const senha = Array.from({length: 10}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    document.getElementById('nu-senha').value = senha;
+}
+
+async function criarNovoUsuario() {
+    const nome  = document.getElementById('nu-nome').value.trim();
+    const email = document.getElementById('nu-email').value.trim();
+    const senha = document.getElementById('nu-senha').value.trim();
+    const erroEl = document.getElementById('nu-erro');
+
+    erroEl.classList.remove('show');
+
+    if (!nome || !email || !senha) {
+        erroEl.textContent = 'Preencha todos os campos.';
+        erroEl.classList.add('show'); return;
+    }
+
+    const users = lerUsuarios();
+    if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
+        erroEl.textContent = 'Este e-mail já está cadastrado.';
+        erroEl.classList.add('show'); return;
+    }
+
+    const hash = await hashSenha(senha);
+    users.push({
+        id:            Date.now(),
+        email,
+        nome,
+        passwordHash:  hash,
+        role:          'user',
+        primeiroAcesso: true,
+        criadoEm:      new Date().toISOString()
+    });
+    gravarUsuarios(users);
+    renderizarListaUsuarios();
+    fecharNovoUsuario();
+    toast(`Usuário "${nome}" criado. Senha temporária: ${senha}`, 'ok');
+}
+
+async function resetarSenhaUsuario(id) {
+    const users = lerUsuarios();
+    const user  = users.find(u => u.id === id);
+    if (!user) return;
+
+    const chars  = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#';
+    const novaSenha = Array.from({length: 10}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    const hash   = await hashSenha(novaSenha);
+
+    user.passwordHash   = hash;
+    user.primeiroAcesso = true;
+    gravarUsuarios(users);
+    renderizarListaUsuarios();
+    alert(`Senha de "${user.nome}" resetada.\nNova senha temporária: ${novaSenha}\n\nCompartilhe com o usuário.`);
+}
+
+function excluirUsuario(id) {
+    const users = lerUsuarios();
+    const user  = users.find(u => u.id === id);
+    if (!user) return;
+    if (!confirm(`Excluir o usuário "${user.nome}"?`)) return;
+
+    gravarUsuarios(users.filter(u => u.id !== id));
+    renderizarListaUsuarios();
+    toast(`Usuário "${user.nome}" excluído.`, 'err');
+}
+
 </script>
 </body>
 </html>
