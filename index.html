@@ -1670,6 +1670,10 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 
 function inicializarApp() {
+    // Remove caches antigos do dashboard que possam ter ficado no localStorage
+    ['agendor-dash-deals-cache','agendor-dash-deals-cache-v2','agendor-dash-deals-cache-v3']
+        .forEach(k => localStorage.removeItem(k));
+
     // Define data de hoje como padrão
     document.getElementById('f-data').value = hoje();
 
@@ -3069,9 +3073,12 @@ function fecharAgendorFora(e) {
 // DASHBOARD — NEGÓCIOS DO AGENDOR
 // =========================================================
 
-// v3 — limita aos últimos 24 meses
-const DASH_CACHE_KEY = 'agendor-dash-deals-cache-v3';
-let dashGanhos   = [];
+// Cache em memória de sessão (sem localStorage — evita quota exceeded)
+// Os dados ficam disponíveis enquanto a aba estiver aberta.
+// TTL de 30 min: se o usuário ficar mais de 30 min na mesma aba, rebusca.
+const DASH_CACHE_TTL_MS = 30 * 60 * 1000;
+let dashCarregadoEm = null; // timestamp da última carga
+let dashGanhos      = [];
 let dashContexto = 'brasil'; // 'brasil' | 'chile'
 
 // IDs dos usuários Chile no Agendor (mais confiável que nome)
@@ -3092,7 +3099,6 @@ function navegarDashboard(contexto, el) {
     dashContexto = contexto;
     navegar('dashboard', el);
 }
-const DASH_CACHE_TTL = 30 * 60 * 1000; // 30 minutos
 
 let dashDeals = []; // todos os deals carregados
 
@@ -3110,13 +3116,11 @@ async function carregarDashboard() {
         document.getElementById('dash-fim').value = hoje.toISOString().split('T')[0];
     }
 
-    // Verifica cache
-    const cacheRaw = localStorage.getItem(DASH_CACHE_KEY);
-    if (cacheRaw) {
-        const cache = JSON.parse(cacheRaw);
-        if (Date.now() - cache.timestamp < DASH_CACHE_TTL && cache.deals.length > 0) {
-            dashDeals = cache.deals;
-            mostrarInfoCache(cache.timestamp, cache.deals.length);
+    // Verifica cache em memória (sem localStorage)
+    if (dashCarregadoEm && dashDeals.length > 0) {
+        const idade = Date.now() - dashCarregadoEm;
+        if (idade < DASH_CACHE_TTL_MS) {
+            mostrarInfoCache(dashCarregadoEm, dashDeals.length);
             renderizarMetricas();
             return;
         }
@@ -3187,13 +3191,9 @@ async function buscarTodosNegociosDash() {
             pagina++;
         }
 
-        // Salva cache
-        localStorage.setItem(DASH_CACHE_KEY, JSON.stringify({
-            timestamp: Date.now(),
-            deals: dashDeals
-        }));
-
-        mostrarInfoCache(Date.now(), dashDeals.length);
+        // Registra timestamp na memória (sem gravar no localStorage)
+        dashCarregadoEm = Date.now();
+        mostrarInfoCache(dashCarregadoEm, dashDeals.length);
         renderizarMetricas();
 
     } catch (erro) {
@@ -3407,8 +3407,8 @@ function voltarDashboard() {
 
 // Botão de recarregar (limpa cache e rebusca)
 function recarregarDash() {
-    localStorage.removeItem(DASH_CACHE_KEY);
-    dashDeals = [];
+    dashDeals       = [];
+    dashCarregadoEm = null;
     buscarTodosNegociosDash();
 }
 
