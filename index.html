@@ -1004,15 +1004,18 @@ input[type="range"]::-webkit-slider-thumb {
                 <div class="dash-card-label">Ganhos <i class="fas fa-external-link-alt" style="font-size:9px;opacity:0.6;margin-left:4px;"></i></div>
                 <div class="dash-card-num" id="dm-gan-qtd">—</div>
                 <div class="dash-card-val" id="dm-gan-val">—</div>
-                <div class="dash-card-sub">clique para ver a lista</div>
+                <div class="dash-card-sub" id="dm-gan-sub">clique para ver a lista</div>
             </div>
             <!-- 2º: Negócios Iniciados (total do período) -->
-            <div class="dash-card azul">
+            <div class="dash-card azul" onclick="abrirListaIniciados()"
+                 style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;"
+                 onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(37,99,235,0.2)';"
+                 onmouseout="this.style.transform='';this.style.boxShadow='';">
                 <div class="dash-card-ico"><i class="fas fa-rocket"></i></div>
-                <div class="dash-card-label">Negócios Iniciados</div>
+                <div class="dash-card-label">Negócios Iniciados <i class="fas fa-external-link-alt" style="font-size:9px;opacity:0.6;margin-left:4px;"></i></div>
                 <div class="dash-card-num" id="dm-ini-qtd">—</div>
                 <div class="dash-card-val" id="dm-ini-val">—</div>
-                <div class="dash-card-sub">total no período</div>
+                <div class="dash-card-sub" id="dm-ini-sub">clique para ver a lista</div>
             </div>
         </div>
 
@@ -1531,7 +1534,7 @@ input[type="range"]::-webkit-slider-thumb {
          PÁGINA: DASHBOARD POR PRODUTOS
          ====================================================== -->
     <!-- ======================================================
-         PÁGINA: NEGÓCIOS GANHOS (drill-down do dashboard)
+         PÁGINA: NEGÓCIOS GANHOS (drill-down com seleção)
          ====================================================== -->
     <div class="page-section" id="page-ganhos">
         <div class="page-header" style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">
@@ -1544,33 +1547,75 @@ input[type="range"]::-webkit-slider-thumb {
             </div>
         </div>
 
-        <!-- Resumo rápido -->
-        <div style="display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;">
-            <div style="background:white;border-radius:10px;padding:14px 22px;box-shadow:0 1px 3px rgba(0,0,0,0.07);display:flex;gap:14px;align-items:center;">
-                <i class="fas fa-trophy" style="color:#16a34a;font-size:20px;"></i>
-                <div>
-                    <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Total de Negócios</div>
-                    <div style="font-size:24px;font-weight:800;color:#0f172a;" id="ganhos-total-qtd">—</div>
-                </div>
+        <!-- Barra de seleção -->
+        <div style="background:white;border-radius:10px;padding:14px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.07);margin-bottom:16px;display:flex;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div>
+                <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Selecionados para a soma</div>
+                <div style="font-size:15px;font-weight:700;color:#0f172a;margin-top:2px;" id="ganhos-resumo">—</div>
             </div>
-            <div style="background:white;border-radius:10px;padding:14px 22px;box-shadow:0 1px 3px rgba(0,0,0,0.07);display:flex;gap:14px;align-items:center;">
-                <i class="fas fa-dollar-sign" style="color:#16a34a;font-size:20px;"></i>
-                <div>
-                    <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Valor Total</div>
-                    <div style="font-size:24px;font-weight:800;color:#0f172a;" id="ganhos-total-val">—</div>
-                </div>
+            <div style="margin-left:auto;display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" onclick="selecionarTodosDeal('ganhos')">
+                    <i class="fas fa-check-square"></i> Selecionar todos
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="limparSelecaoDeal('ganhos')">
+                    <i class="fas fa-square"></i> Desmarcar todos
+                </button>
             </div>
         </div>
 
-        <!-- Tabela de ganhos -->
-        <div class="dash-table" id="ganhos-tabela">
-            <div style="display:grid;grid-template-columns:2.5fr 1.5fr 1fr 1fr;background:#f8fafc;padding:10px 18px;border-bottom:1px solid #f1f5f9;">
+        <!-- Tabela de ganhos com checkboxes -->
+        <div class="dash-table">
+            <div style="display:grid;grid-template-columns:36px 2.5fr 1.5fr 1fr 1fr;background:#f8fafc;padding:10px 18px;border-bottom:1px solid #f1f5f9;">
+                <span></span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Negócio</span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Empresa</span>
-                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Data do Ganho</span>
+                <span style="font-size:10px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.5px;">Data do Ganho</span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Valor</span>
             </div>
             <div id="ganhos-lista-body"></div>
+        </div>
+    </div>
+
+    <!-- ======================================================
+         PÁGINA: NEGÓCIOS INICIADOS (drill-down com seleção)
+         ====================================================== -->
+    <div class="page-section" id="page-iniciados">
+        <div class="page-header" style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="voltarDashboard()" style="margin-top:4px;flex-shrink:0;">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </button>
+            <div>
+                <h1>Negócios Iniciados</h1>
+                <p id="iniciados-subtitulo">—</p>
+            </div>
+        </div>
+
+        <!-- Barra de seleção -->
+        <div style="background:white;border-radius:10px;padding:14px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.07);margin-bottom:16px;display:flex;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div>
+                <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Selecionados para a soma</div>
+                <div style="font-size:15px;font-weight:700;color:#0f172a;margin-top:2px;" id="iniciados-resumo">—</div>
+            </div>
+            <div style="margin-left:auto;display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" onclick="selecionarTodosDeal('iniciados')">
+                    <i class="fas fa-check-square"></i> Selecionar todos
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="limparSelecaoDeal('iniciados')">
+                    <i class="fas fa-square"></i> Desmarcar todos
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabela de iniciados com checkboxes -->
+        <div class="dash-table">
+            <div style="display:grid;grid-template-columns:36px 2.5fr 1.5fr 1fr 1fr;background:#f8fafc;padding:10px 18px;border-bottom:1px solid #f1f5f9;">
+                <span></span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Negócio</span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Empresa</span>
+                <span style="font-size:10px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:0.5px;">Data de Início</span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Valor</span>
+            </div>
+            <div id="iniciados-lista-body"></div>
         </div>
     </div>
 
@@ -3100,8 +3145,11 @@ function fecharAgendorFora(e) {
 // Os dados ficam disponíveis enquanto a aba estiver aberta.
 // TTL de 30 min: se o usuário ficar mais de 30 min na mesma aba, rebusca.
 const DASH_CACHE_TTL_MS = 30 * 60 * 1000;
-let dashCarregadoEm = null; // timestamp da última carga
-let dashGanhos      = [];
+let dashCarregadoEm       = null;
+let dashGanhos            = [];
+let dashIniciados         = [];
+let dashGanhosExcluidos   = new Set();
+let dashIniciadosExcluidos = new Set();
 let dashContexto = 'brasil'; // 'brasil' | 'chile'
 
 // IDs dos usuários Chile no Agendor (mais confiável que nome)
@@ -3245,11 +3293,18 @@ function fmtValor(n) {
 // ---------------------------------------------------------
 // Aplica filtro de data e renderiza métricas
 // ---------------------------------------------------------
-function aplicarFiltroDash() { renderizarMetricas(); }
+function aplicarFiltroDash() {
+    // Ao mudar o filtro, zera exclusões (deals do período antigo não valem)
+    dashGanhosExcluidos.clear();
+    dashIniciadosExcluidos.clear();
+    renderizarMetricas();
+}
 
 function limparFiltroDash() {
     document.getElementById('dash-ini').value = '';
     document.getElementById('dash-fim').value = '';
+    dashGanhosExcluidos.clear();
+    dashIniciadosExcluidos.clear();
     renderizarMetricas();
 }
 
@@ -3280,34 +3335,42 @@ function renderizarMetricas() {
         return true;
     };
 
-    // Ganhos: dealStatus.id=2 + wonAt preenchido + dentro do período
-    const ganhos = base.filter(d => {
+    // Listas completas do período (para o drill-down mostrar todos)
+    const ganhosBrutos = base.filter(d => {
         if (d.dealStatus?.id !== 2) return false;
         if (!d.wonAt) return false;
         if (semFiltro) return true;
         return dentro(d.wonAt);
     });
+    const iniciadosBrutos = base.filter(d =>
+        semFiltro || dentro(d.createdAt)
+    );
 
-    // Iniciados: todos os deals do contexto com createdAt no período
-    const iniciados = base.filter(d => {
-        if (semFiltro) return true;
-        return dentro(d.createdAt);
-    });
+    // Salva listas completas para o drill-down
+    dashGanhos    = ganhosBrutos;
+    dashIniciados = iniciadosBrutos;
+
+    // Aplica exclusões do usuário para os totais dos cards
+    const ganhos    = ganhosBrutos.filter(d => !dashGanhosExcluidos.has(d.id));
+    const iniciados = iniciadosBrutos.filter(d => !dashIniciadosExcluidos.has(d.id));
 
     const soma = arr => arr.reduce((acc, d) => acc + (d.value || 0), 0);
     const vGan = soma(ganhos);
     const vIni = soma(iniciados);
 
-    // Salva para o drill-down
-    dashGanhos = ganhos;
-
-    // Atualiza cards
+    // Atualiza cards com indicador de exclusões
+    const exclG = dashGanhosExcluidos.size;
+    const exclI = dashIniciadosExcluidos.size;
     document.getElementById('dm-gan-qtd').textContent = ganhos.length;
     document.getElementById('dm-gan-val').textContent = fmtValor(vGan);
+    document.getElementById('dm-gan-sub').textContent = exclG > 0
+        ? `${exclG} excluído(s) · clique para gerenciar` : 'clique para ver a lista';
     document.getElementById('dm-ini-qtd').textContent = iniciados.length;
     document.getElementById('dm-ini-val').textContent = fmtValor(vIni);
+    document.getElementById('dm-ini-sub').textContent = exclI > 0
+        ? `${exclI} excluído(s) · clique para gerenciar` : 'clique para ver a lista';
 
-    // Mostra os cards e renderiza breakdown por produto com os mesmos arrays
+    // Mostra os cards e breakdown por produto (usando listas pós-exclusão)
     document.getElementById('dash-cards').style.display = 'grid';
     renderizarBreakdownProdutos(ganhos, iniciados);
 
@@ -3364,73 +3427,130 @@ function mostrarInfoCache(timestamp, total) {
 // DRILL-DOWN: abre a lista de negócios ganhos
 // ---------------------------------------------------------
 function abrirListaGanhos() {
-    if (dashGanhos.length === 0) {
-        toast('Carregue o dashboard primeiro.', 'err');
-        return;
-    }
-
-    // Subtítulo com período selecionado
+    if (!dashGanhos.length) { toast('Carregue o dashboard primeiro.', 'err'); return; }
     const ini = document.getElementById('dash-ini').value;
     const fim = document.getElementById('dash-fim').value;
-    const periodo = ini && fim
-        ? `Período: ${fmtData(ini)} a ${fmtData(fim)}`
-        : ini ? `A partir de ${fmtData(ini)}`
-        : fim ? `Até ${fmtData(fim)}`
-        : 'Todos os períodos';
-    document.getElementById('ganhos-subtitulo').textContent = periodo;
+    document.getElementById('ganhos-subtitulo').textContent = _legendaPeriodo(ini, fim);
+    _renderizarListaSelecionavel('ganhos', dashGanhos, dashGanhosExcluidos, 'ganhos-lista-body',
+        d => ({ data: d.wonAt, cor: '#16a34a' }));
+    atualizarSummaryLista('ganhos');
+    _navPage('page-ganhos');
+}
 
-    // Totais
-    const total = dashGanhos.length;
-    const valor = dashGanhos.reduce((acc, d) => acc + (d.value || 0), 0);
-    document.getElementById('ganhos-total-qtd').textContent = total;
-    document.getElementById('ganhos-total-val').textContent = fmtValor(valor);
+function abrirListaIniciados() {
+    if (!dashIniciados.length) { toast('Carregue o dashboard primeiro.', 'err'); return; }
+    const ini = document.getElementById('dash-ini').value;
+    const fim = document.getElementById('dash-fim').value;
+    document.getElementById('iniciados-subtitulo').textContent = _legendaPeriodo(ini, fim);
+    _renderizarListaSelecionavel('iniciados', dashIniciados, dashIniciadosExcluidos, 'iniciados-lista-body',
+        d => ({ data: d.createdAt, cor: '#2563eb' }));
+    atualizarSummaryLista('iniciados');
+    _navPage('page-iniciados');
+}
 
-    // Ordena por wonAt mais recente
-    const ordenados = [...dashGanhos].sort(
-        (a, b) => new Date(b.wonAt || 0) - new Date(a.wonAt || 0)
-    );
+// ---------------------------------------------------------
+// Funções auxiliares compartilhadas
+// ---------------------------------------------------------
+function _legendaPeriodo(ini, fim) {
+    if (ini && fim) return `Período: ${fmtData(ini)} a ${fmtData(fim)}`;
+    if (ini) return `A partir de ${fmtData(ini)}`;
+    if (fim) return `Até ${fmtData(fim)}`;
+    return 'Todos os períodos';
+}
 
-    // Renderiza tabela
+function _navPage(id) {
+    document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+function _renderizarListaSelecionavel(tipo, lista, excluidos, bodyId, metaDeal) {
     const fmtDt = s => s
         ? new Date(s).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' })
         : '—';
 
-    document.getElementById('ganhos-lista-body').innerHTML = ordenados.map(d => `
-        <div style="display:grid;grid-template-columns:2.5fr 1.5fr 1fr 1fr;padding:11px 18px;
-                    border-bottom:1px solid #f8fafc;align-items:center;transition:background 0.12s;"
-             onmouseover="this.style.background='#f0fdf4';"
-             onmouseout="this.style.background='';">
-            <div style="font-size:13px;font-weight:600;color:#0f172a;
-                        overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.title||''}">
-                ${d.title || '—'}
-            </div>
-            <div style="font-size:12px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
-                 title="${d.organization?.name||''}">
-                ${d.organization?.name || '—'}
-            </div>
-            <div style="font-size:12px;color:#16a34a;font-weight:600;">
-                ${fmtDt(d.wonAt)}
-            </div>
-            <div style="font-size:13px;font-weight:700;color:#0f172a;">
-                ${fmtValor(d.value)}
-            </div>
-        </div>`
-    ).join('');
+    const ordenados = [...lista].sort(
+        (a, b) => new Date(b.wonAt || b.createdAt || 0) - new Date(a.wonAt || a.createdAt || 0)
+    );
 
-    // Navega para a página (sem alterar sidebar)
-    document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-ganhos').classList.add('active');
-    window.scrollTo(0, 0);
+    document.getElementById(bodyId).innerHTML = ordenados.map(d => {
+        const checked  = !excluidos.has(d.id) ? 'checked' : '';
+        const opacidade = excluidos.has(d.id) ? 'opacity:0.4;' : '';
+        const meta = metaDeal(d);
+        return `
+        <div style="display:grid;grid-template-columns:36px 2.5fr 1.5fr 1fr 1fr;padding:10px 18px;
+                    border-bottom:1px solid #f8fafc;align-items:center;transition:background 0.12s;${opacidade}"
+             id="row-${tipo}-${d.id}"
+             onmouseover="this.style.background='#f8fafc';"
+             onmouseout="this.style.background='';">
+            <input type="checkbox" ${checked} style="width:16px;height:16px;cursor:pointer;accent-color:${meta.cor};"
+                   onchange="toggleExclusao('${tipo}', ${d.id})">
+            <div style="font-size:13px;font-weight:600;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                 title="${d.title||''}">${d.title || '—'}</div>
+            <div style="font-size:12px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                 title="${d.organization?.name||''}">${d.organization?.name || '—'}</div>
+            <div style="font-size:12px;font-weight:600;color:${meta.cor};">${fmtDt(meta.data)}</div>
+            <div style="font-size:13px;font-weight:700;color:#0f172a;">${fmtValor(d.value)}</div>
+        </div>`;
+    }).join('');
+}
+
+// ---------------------------------------------------------
+// Controles de seleção
+// ---------------------------------------------------------
+function toggleExclusao(tipo, id) {
+    const set = tipo === 'ganhos' ? dashGanhosExcluidos : dashIniciadosExcluidos;
+    const lista = tipo === 'ganhos' ? dashGanhos : dashIniciados;
+    if (set.has(id)) set.delete(id); else set.add(id);
+
+    // Atualiza visual da linha
+    const row = document.getElementById(`row-${tipo}-${id}`);
+    if (row) row.style.opacity = set.has(id) ? '0.4' : '1';
+
+    atualizarSummaryLista(tipo);
+}
+
+function atualizarSummaryLista(tipo) {
+    const lista     = tipo === 'ganhos' ? dashGanhos : dashIniciados;
+    const excluidos = tipo === 'ganhos' ? dashGanhosExcluidos : dashIniciadosExcluidos;
+    const incluidos = lista.filter(d => !excluidos.has(d.id));
+    const valor     = incluidos.reduce((a, d) => a + (d.value || 0), 0);
+    const el = document.getElementById(`${tipo}-resumo`);
+    if (el) el.innerHTML =
+        `<strong>${incluidos.length}</strong> de ${lista.length} negócios selecionados ·
+         <strong style="color:#16a34a;">${fmtValor(valor)}</strong>`;
+}
+
+function selecionarTodosDeal(tipo) {
+    const set = tipo === 'ganhos' ? dashGanhosExcluidos : dashIniciadosExcluidos;
+    const lista = tipo === 'ganhos' ? dashGanhos : dashIniciados;
+    set.clear();
+    lista.forEach(d => {
+        const row = document.getElementById(`row-${tipo}-${d.id}`);
+        if (row) { row.style.opacity = '1'; row.querySelector('input').checked = true; }
+    });
+    atualizarSummaryLista(tipo);
+}
+
+function limparSelecaoDeal(tipo) {
+    const set = tipo === 'ganhos' ? dashGanhosExcluidos : dashIniciadosExcluidos;
+    const lista = tipo === 'ganhos' ? dashGanhos : dashIniciados;
+    lista.forEach(d => set.add(d.id));
+    lista.forEach(d => {
+        const row = document.getElementById(`row-${tipo}-${d.id}`);
+        if (row) { row.style.opacity = '0.4'; row.querySelector('input').checked = false; }
+    });
+    atualizarSummaryLista(tipo);
 }
 
 function voltarDashboard() {
     document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
     document.getElementById('page-dashboard').classList.add('active');
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    // Ativa o nav item correto conforme o contexto (Brasil=1, Chile=4)
     const idx = dashContexto === 'chile' ? 4 : 1;
     document.querySelectorAll('.nav-item')[idx].classList.add('active');
     window.scrollTo(0, 0);
+    renderizarMetricas(); // Recalcula totais refletindo as exclusões atuais
 }
 
 // Botão de recarregar (limpa cache e rebusca)
