@@ -3186,32 +3186,38 @@ function renderizarMetricas() {
     const ini = iniStr ? new Date(iniStr + 'T00:00:00') : null;
     const fim = fimStr ? new Date(fimStr + 'T23:59:59') : null;
 
-    // Cada categoria usa a sua própria data de referência (igual ao painel do Agendor)
-    // Ganhos  → wonAt  (data em que o deal foi ganho)
-    // Perdidos → lostAt (data em que o deal foi perdido)
-    // Iniciados → startTime / createdAt (data de início do deal)
+    // Opção C: filtra pela data específica de cada evento.
+    // Se wonAt/lostAt não estiver preenchido, o deal é excluído do período —
+    // esses campos só existem quando o evento (ganho/perda) realmente ocorreu.
+    const semFiltro = !ini && !fim;
+
     const dentro = (dateStr) => {
-        if (!dateStr) return false;
+        if (!dateStr) return false; // sem data = fora de qualquer período
         const dt = new Date(dateStr);
         if (ini && dt < ini) return false;
         if (fim && dt > fim) return false;
         return true;
     };
 
-    const semFiltro = !ini && !fim;
+    // Ganhos: dealStatus=2; filtra por wonAt no período (exclui se wonAt vazio)
+    const ganhos = dashDeals.filter(d => {
+        if (d.dealStatus?.id !== 2) return false;
+        if (semFiltro) return true;
+        return dentro(d.wonAt);
+    });
 
-    const ganhos   = dashDeals.filter(d =>
-        (d.dealStatus?.id === 2 || d.wonAt) &&
-        (semFiltro || dentro(d.wonAt))
-    );
-    const perdidos = dashDeals.filter(d =>
-        (d.dealStatus?.id === 3 || d.lostAt) &&
-        (semFiltro || dentro(d.lostAt))
-    );
-    // Iniciados: todos os deals cujo startTime/createdAt está no período
-    const iniciados = dashDeals.filter(d =>
-        semFiltro || dentro(d.startTime || d.createdAt)
-    );
+    // Perdidos: dealStatus=3; filtra por lostAt no período (exclui se lostAt vazio)
+    const perdidos = dashDeals.filter(d => {
+        if (d.dealStatus?.id !== 3) return false;
+        if (semFiltro) return true;
+        return dentro(d.lostAt);
+    });
+
+    // Iniciados: todos os deals com startTime/createdAt no período
+    const iniciados = dashDeals.filter(d => {
+        if (semFiltro) return true;
+        return dentro(d.startTime || d.createdAt);
+    });
 
     const soma = arr => arr.reduce((acc, d) => acc + (d.value || 0), 0);
     const vGan = soma(ganhos);
