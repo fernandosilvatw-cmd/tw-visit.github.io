@@ -790,10 +790,6 @@ input[type="range"]::-webkit-slider-thumb {
                     </div>
                     <div class="g2">
                         <div class="fg">
-                            <label>Nome do Representante *</label>
-                            <input type="text" id="f-rep" placeholder="Seu nome completo" required>
-                        </div>
-                        <div class="fg">
                             <label>Empresa Visitada *</label>
                             <div style="display:flex;gap:8px;align-items:center;">
                                 <input type="text" id="f-empresa" placeholder="Nome da empresa" required style="flex:1;">
@@ -803,6 +799,10 @@ input[type="range"]::-webkit-slider-thumb {
                                     <i class="fas fa-search"></i> Agendor
                                 </button>
                             </div>
+                        </div>
+                        <div class="fg">
+                            <label>Nome do Representante *</label>
+                            <input type="text" id="f-rep" placeholder="Seu nome completo" required>
                         </div>
                         <div class="fg">
                             <label>Negócio</label>
@@ -856,18 +856,37 @@ input[type="range"]::-webkit-slider-thumb {
                     <div class="g2">
                         <div class="fg">
                             <label>Tipo de Visita</label>
-                            <select id="f-tipo">
+                            <select id="f-tipo" onchange="onTipoVisitaChange(this.value)">
                                 <option value="">Selecione...</option>
                                 <option>Prospecção</option>
                                 <option>Apresentação</option>
                                 <option>Negociação</option>
                                 <option>Pós-venda</option>
+                                <option>Visita RC/ET</option>
                                 <option>Outro</option>
                             </select>
                         </div>
                         <div class="fg">
                             <label>O que se esperava alcançar</label>
                             <textarea id="f-objetivo" placeholder="Descreva o objetivo principal da visita..."></textarea>
+                        </div>
+                        <!-- Aparece apenas quando "Visita RC/ET" é selecionado -->
+                        <div id="rcet-section" class="gcol2" style="display:none;">
+                            <div style="background:#f0f7ff;border:1.5px dashed #93c5fd;border-radius:10px;padding:16px 18px;">
+                                <div style="font-size:11px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">
+                                    <i class="fas fa-paperclip"></i> Anexo RC / RT
+                                </div>
+                                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                                    <label class="btn btn-secondary" style="cursor:pointer;margin:0;">
+                                        <i class="fas fa-folder-open"></i> Selecionar arquivo
+                                        <input type="file" id="f-rcet-file" hidden
+                                            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                                            onchange="handleRCETFile(this)">
+                                    </label>
+                                    <span style="font-size:12px;color:#94a3b8;">PDF, Word, Excel ou Imagem</span>
+                                </div>
+                                <div id="rcet-preview" style="margin-top:10px;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -896,6 +915,24 @@ input[type="range"]::-webkit-slider-thumb {
                         <div class="fg">
                             <label>Interesse Demonstrado</label>
                             <textarea id="f-interesse-desc" placeholder="Como o cliente demonstrou interesse..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- TOMADORES DE DECISÃO -->
+                    <div style="margin-top:18px;border-top:1px solid #f1f5f9;padding-top:18px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                            <div style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.8px;">
+                                <i class="fas fa-user-check" style="color:#2563eb;margin-right:6px;"></i>Tomadores de Decisão
+                            </div>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="adicionarTomador()">
+                                <i class="fas fa-plus"></i> Adicionar
+                            </button>
+                        </div>
+                        <div id="tomadores-lista">
+                            <!-- Entradas geradas dinamicamente pelo JS -->
+                            <div id="tomadores-vazio" style="font-size:13px;color:#94a3b8;padding:12px 0;">
+                                Nenhum tomador de decisão cadastrado.
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1401,11 +1438,14 @@ function coletarForm() {
         // Objetivo
         tipo:         document.getElementById('f-tipo').value,
         objetivo:     document.getElementById('f-objetivo').value,
+        rcetNome:     rcetArquivo.nome,
+        rcetDados:    rcetArquivo.dados,
         // Resumo
         pauta:        document.getElementById('f-pauta').value,
         pontos:       document.getElementById('f-pontos').value,
         objecoes:     document.getElementById('f-objecoes').value,
         interDesc:    document.getElementById('f-interesse-desc').value,
+        tomadores:    coletarTomadores(),
         // Status comercial
         situacao:     document.getElementById('f-situacao').value,
         produtos:     document.getElementById('f-produtos').value,
@@ -1591,7 +1631,14 @@ function editarVisita(id) {
     document.getElementById('f-cliente-email').value = v.clienteEmail || '';
     document.getElementById('f-cliente-tel').value   = v.clienteTel   || '';
     document.getElementById('f-tipo').value        = v.tipo || '';
+    onTipoVisitaChange(v.tipo || '');
+    // Restaura anexo RC/ET
+    rcetArquivo = { nome: v.rcetNome || '', tamanho: '', dados: v.rcetDados || '' };
+    renderizarPreviewRCET();
     document.getElementById('f-objetivo').value    = v.objetivo || '';
+    // Restaura tomadores de decisão
+    tomadores = (v.tomadores || []).map((t, i) => ({ ...t, id: Date.now() + i }));
+    renderizarTomadores();
     document.getElementById('f-pauta').value       = v.pauta || '';
     document.getElementById('f-pontos').value      = v.pontos || '';
     document.getElementById('f-objecoes').value    = v.objecoes || '';
@@ -1638,6 +1685,14 @@ function limparForm() {
     document.getElementById('form-titulo').textContent = 'Nova Visita Técnica';
 
     visitaEmEdicao = null;
+
+    // Limpa RC/ET
+    limparRCET();
+    document.getElementById('rcet-section').style.display = 'none';
+
+    // Limpa tomadores de decisão
+    tomadores = [];
+    renderizarTomadores();
 
     // Recoloca o nome padrão
     const cfg = lerConfig();
@@ -1723,6 +1778,11 @@ function montarRelatorio(v) {
             ${C('Negócio', v.negocio)}
             ${C('Segmento', v.segmento)}
             ${C('Tipo de Visita', v.tipo)}
+            ${v.rcetNome ? `
+            <div class="rel-field">
+                <span class="rl">Anexo RC/RT</span>
+                <span class="rv"><i class="fas fa-paperclip" style="color:#2563eb;margin-right:4px;"></i>${v.rcetNome}</span>
+            </div>` : ''}
             ${C('Nome do Cliente',     v.clienteNome)}
             ${C('Cargo do Cliente',    v.clienteCargo)}
             ${C('E-mail do Cliente',   v.clienteEmail)}
@@ -1736,7 +1796,7 @@ function montarRelatorio(v) {
         <div class="rel-grid">${CF('O que se esperava alcançar', v.objetivo)}</div>
     </div>` : ''}
 
-    ${(v.pauta || v.pontos || v.objecoes || v.interDesc) ? `
+    ${(v.pauta || v.pontos || v.objecoes || v.interDesc || v.tomadores?.length) ? `
     <div class="rel-sec">
         <h3>Resumo da Reunião</h3>
         <div class="rel-grid">
@@ -1745,6 +1805,21 @@ function montarRelatorio(v) {
             ${CF('Objeções Apresentadas', v.objecoes)}
             ${CF('Interesse Demonstrado', v.interDesc)}
         </div>
+        ${v.tomadores?.length ? `
+        <div style="margin-top:14px;">
+            <div style="font-size:10px;font-weight:700;color:#2563eb;text-transform:uppercase;
+                        letter-spacing:1px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #dbeafe;">
+                Tomadores de Decisão
+            </div>
+            ${v.tomadores.map(t => `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;
+                        margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #f1f5f9;">
+                ${t.nome  ? `<div><span style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Nome</span><br><span style="font-size:13px;">${t.nome}</span></div>` : ''}
+                ${t.cargo ? `<div><span style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Cargo</span><br><span style="font-size:13px;">${t.cargo}</span></div>` : ''}
+                ${t.email ? `<div><span style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;">E-mail</span><br><span style="font-size:13px;">${t.email}</span></div>` : ''}
+                ${t.tel   ? `<div><span style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Telefone</span><br><span style="font-size:13px;">${t.tel}</span></div>` : ''}
+            </div>`).join('')}
+        </div>` : ''}
     </div>` : ''}
 
     <div class="rel-sec">
@@ -2178,6 +2253,157 @@ function fecharContato() {
 }
 function fecharContatoFora(e) {
     if (e.target === document.getElementById('modal-contato')) fecharContato();
+}
+
+// =========================================================
+// VISITA RC/ET — ANEXO DE ARQUIVO
+// =========================================================
+
+let rcetArquivo = { nome: '', tamanho: '', dados: '' }; // dados em base64
+
+function onTipoVisitaChange(valor) {
+    const secao = document.getElementById('rcet-section');
+    if (valor === 'Visita RC/ET') {
+        secao.style.display = 'block';
+    } else {
+        secao.style.display = 'none';
+        limparRCET();
+    }
+}
+
+function handleRCETFile(input) {
+    const arquivo = input.files[0];
+    if (!arquivo) return;
+
+    // Limite de 5 MB para armazenar no localStorage
+    const LIMITE = 5 * 1024 * 1024;
+    if (arquivo.size > LIMITE) {
+        toast('Arquivo muito grande (máx. 5 MB).', 'err');
+        input.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        rcetArquivo = {
+            nome:    arquivo.name,
+            tamanho: (arquivo.size / 1024).toFixed(1) + ' KB',
+            dados:   e.target.result   // base64
+        };
+        renderizarPreviewRCET();
+    };
+    reader.readAsDataURL(arquivo);
+}
+
+function renderizarPreviewRCET() {
+    const el = document.getElementById('rcet-preview');
+    if (!rcetArquivo.nome) { el.innerHTML = ''; return; }
+
+    const icone = rcetArquivo.nome.match(/\.(jpg|jpeg|png)$/i)
+        ? 'fa-image' : rcetArquivo.nome.match(/\.pdf$/i)
+        ? 'fa-file-pdf' : 'fa-file-alt';
+
+    el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;background:white;border:1.5px solid #e2e8f0;
+                    border-radius:8px;padding:10px 14px;">
+            <i class="fas ${icone}" style="color:#2563eb;font-size:18px;"></i>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:600;color:#0f172a;
+                            overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rcetArquivo.nome}</div>
+                <div style="font-size:11px;color:#94a3b8;">${rcetArquivo.tamanho}</div>
+            </div>
+            <button type="button" onclick="limparRCET()" class="btn btn-danger btn-sm" style="padding:5px 10px;">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>`;
+}
+
+function limparRCET() {
+    rcetArquivo = { nome: '', tamanho: '', dados: '' };
+    const input = document.getElementById('f-rcet-file');
+    if (input) input.value = '';
+    const prev = document.getElementById('rcet-preview');
+    if (prev) prev.innerHTML = '';
+}
+
+// =========================================================
+// TOMADORES DE DECISÃO
+// =========================================================
+
+let tomadores = []; // array de { nome, tel, email, cargo }
+
+function adicionarTomador(dados) {
+    const id = Date.now();
+    const t = dados || { id, nome: '', tel: '', email: '', cargo: '' };
+    if (!dados) { t.id = id; tomadores.push(t); }
+    renderizarTomadores();
+}
+
+function removerTomador(id) {
+    tomadores = tomadores.filter(t => t.id !== id);
+    renderizarTomadores();
+}
+
+function lerCamposTomador(id) {
+    const t = tomadores.find(x => x.id === id);
+    if (!t) return;
+    t.nome  = document.getElementById(`td-nome-${id}`)?.value  || '';
+    t.tel   = document.getElementById(`td-tel-${id}`)?.value   || '';
+    t.email = document.getElementById(`td-email-${id}`)?.value || '';
+    t.cargo = document.getElementById(`td-cargo-${id}`)?.value || '';
+}
+
+function coletarTomadores() {
+    // Lê os campos atuais antes de retornar
+    tomadores.forEach(t => lerCamposTomador(t.id));
+    return tomadores.map(t => ({ nome: t.nome, tel: t.tel, email: t.email, cargo: t.cargo }));
+}
+
+function renderizarTomadores() {
+    const lista = document.getElementById('tomadores-lista');
+    const vazio = document.getElementById('tomadores-vazio');
+    if (vazio) vazio.style.display = tomadores.length === 0 ? 'block' : 'none';
+
+    // Remove entradas anteriores (mantém o div "vazio")
+    lista.querySelectorAll('.tomador-card').forEach(el => el.remove());
+
+    tomadores.forEach((t, idx) => {
+        const card = document.createElement('div');
+        card.className = 'tomador-card';
+        card.style.cssText = `
+            background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;
+            padding:14px 16px;margin-bottom:10px;position:relative;`;
+        card.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">
+                    Tomador ${idx + 1}
+                </span>
+                <button type="button" onclick="removerTomador(${t.id})"
+                    style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:14px;padding:2px 6px;border-radius:5px;"
+                    onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#94a3b8'">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="g2" style="gap:10px;">
+                <div class="fg">
+                    <label>Nome</label>
+                    <input type="text" id="td-nome-${t.id}" value="${t.nome}" placeholder="Nome completo">
+                </div>
+                <div class="fg">
+                    <label>Cargo</label>
+                    <input type="text" id="td-cargo-${t.id}" value="${t.cargo}" placeholder="Cargo / função">
+                </div>
+                <div class="fg">
+                    <label>E-mail</label>
+                    <input type="email" id="td-email-${t.id}" value="${t.email}" placeholder="email@empresa.com">
+                </div>
+                <div class="fg">
+                    <label>Telefone</label>
+                    <input type="tel" id="td-tel-${t.id}" value="${t.tel}" placeholder="(00) 00000-0000">
+                </div>
+            </div>`;
+        lista.appendChild(card);
+    });
 }
 
 // ---------------------------------------------------------
