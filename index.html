@@ -3069,20 +3069,19 @@ function fecharAgendorFora(e) {
 // DASHBOARD — NEGÓCIOS DO AGENDOR
 // =========================================================
 
-const DASH_CACHE_KEY = 'agendor-dash-deals-cache';
-let dashGanhos  = []; // deals ganhos do período atual (para drill-down)
+// v2 força rebuild do cache (adicionamos owner.id)
+const DASH_CACHE_KEY = 'agendor-dash-deals-cache-v2';
+let dashGanhos   = [];
 let dashContexto = 'brasil'; // 'brasil' | 'chile'
 
-// Usuários da operação Chile — excluídos do dashboard Brasil,
-// exclusivos no dashboard Chile
-const USUARIOS_CHILE = ['tomas castilho', 'tomas castillo', 'marcela', 'gustavo carvalho'];
+// IDs dos usuários Chile no Agendor (mais confiável que nome)
+// Tomas Castillo: 617541 | Marcela: 825611 | Gustavo Carvalho: 970893
+const IDS_CHILE = [617541, 825611, 970893];
 
 function isChile(deal) {
-    const owner = (deal.owner?.name || '').toLowerCase();
-    return USUARIOS_CHILE.some(u => owner.includes(u.split(' ')[0]));
+    return IDS_CHILE.includes(deal.owner?.id);
 }
 
-// Retorna apenas os deals do contexto atual (brasil ou chile)
 function filtrarPorContexto(deals) {
     if (dashContexto === 'chile') return deals.filter(isChile);
     return deals.filter(d => !isChile(d));
@@ -3169,7 +3168,7 @@ async function buscarTodosNegociosDash() {
                 wonAt:       d.wonAt      || null,
                 lostAt:      d.lostAt     || null,
                 organization:{ name: d.organization?.name || '' },
-                owner:        { name: d.owner?.name        || '' },
+                owner:        { id: d.owner?.id || null, name: d.owner?.name || '' },
             }));
             dashDeals.push(...slim);
 
