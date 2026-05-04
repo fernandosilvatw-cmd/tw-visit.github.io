@@ -3186,19 +3186,32 @@ function renderizarMetricas() {
     const ini = iniStr ? new Date(iniStr + 'T00:00:00') : null;
     const fim = fimStr ? new Date(fimStr + 'T23:59:59') : null;
 
-    // Filtra por data de início do negócio
-    const filtrados = dashDeals.filter(d => {
-        const dt = new Date(d.startTime || d.createdAt || 0);
+    // Cada categoria usa a sua própria data de referência (igual ao painel do Agendor)
+    // Ganhos  → wonAt  (data em que o deal foi ganho)
+    // Perdidos → lostAt (data em que o deal foi perdido)
+    // Iniciados → startTime / createdAt (data de início do deal)
+    const dentro = (dateStr) => {
+        if (!dateStr) return false;
+        const dt = new Date(dateStr);
         if (ini && dt < ini) return false;
         if (fim && dt > fim) return false;
         return true;
-    });
+    };
 
-    // Agrupa por status
-    const ganhos  = filtrados.filter(d => d.dealStatus?.id === 2 || d.wonAt);
-    const perdidos = filtrados.filter(d => d.dealStatus?.id === 3 || d.lostAt);
-    // Iniciados = todos os negócios do período (independente do status)
-    const iniciados = filtrados;
+    const semFiltro = !ini && !fim;
+
+    const ganhos   = dashDeals.filter(d =>
+        (d.dealStatus?.id === 2 || d.wonAt) &&
+        (semFiltro || dentro(d.wonAt))
+    );
+    const perdidos = dashDeals.filter(d =>
+        (d.dealStatus?.id === 3 || d.lostAt) &&
+        (semFiltro || dentro(d.lostAt))
+    );
+    // Iniciados: todos os deals cujo startTime/createdAt está no período
+    const iniciados = dashDeals.filter(d =>
+        semFiltro || dentro(d.startTime || d.createdAt)
+    );
 
     const soma = arr => arr.reduce((acc, d) => acc + (d.value || 0), 0);
     const vGan = soma(ganhos);
@@ -3230,7 +3243,7 @@ function renderizarMetricas() {
     document.getElementById('dash-cards').style.display = 'grid';
 
     // Tabela dos 20 mais recentes (ordenados por data)
-    const recentes = [...filtrados]
+    const recentes = [...iniciados]
         .sort((a, b) => new Date(b.startTime || b.createdAt || 0) - new Date(a.startTime || a.createdAt || 0))
         .slice(0, 20);
 
