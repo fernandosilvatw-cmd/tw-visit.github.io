@@ -3256,10 +3256,10 @@ function renderizarMetricas() {
         return dentro(d.wonAt);
     });
 
-    // Iniciados: todos os deals do contexto com startTime no período
+    // Iniciados: todos os deals do contexto com createdAt no período
     const iniciados = base.filter(d => {
         if (semFiltro) return true;
-        return dentro(d.startTime);
+        return dentro(d.createdAt);
     });
 
     const soma = arr => arr.reduce((acc, d) => acc + (d.value || 0), 0);
