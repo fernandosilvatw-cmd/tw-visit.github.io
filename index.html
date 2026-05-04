@@ -3069,8 +3069,8 @@ function fecharAgendorFora(e) {
 // DASHBOARD — NEGÓCIOS DO AGENDOR
 // =========================================================
 
-// v2 força rebuild do cache (adicionamos owner.id)
-const DASH_CACHE_KEY = 'agendor-dash-deals-cache-v2';
+// v3 — limita aos últimos 24 meses
+const DASH_CACHE_KEY = 'agendor-dash-deals-cache-v3';
 let dashGanhos   = [];
 let dashContexto = 'brasil'; // 'brasil' | 'chile'
 
@@ -3155,21 +3155,26 @@ async function buscarTodosNegociosDash() {
 
             if (lista.length === 0) break;
 
+            // Corte: apenas deals criados nos últimos 24 meses
+            const corte24m = new Date();
+            corte24m.setMonth(corte24m.getMonth() - 24);
+
             // Guarda apenas os campos usados no dashboard (~200 bytes/deal em vez de ~15 KB)
-            // Isso evita estourar o limite de 5 MB do localStorage
-            const slim = lista.map(d => ({
-                id:          d.id,
-                title:       d.title || d.name || '',
-                value:       d.value || 0,
-                dealStatus:  { id: d.dealStatus?.id, name: d.dealStatus?.name },
-                startTime:   d.startTime  || null,
-                createdAt:   d.createdAt  || null,
-                updatedAt:   d.updatedAt  || null,
-                wonAt:       d.wonAt      || null,
-                lostAt:      d.lostAt     || null,
-                organization:{ name: d.organization?.name || '' },
-                owner:        { id: d.owner?.id || null, name: d.owner?.name || '' },
-            }));
+            const slim = lista
+                .filter(d => !d.createdAt || new Date(d.createdAt) >= corte24m)
+                .map(d => ({
+                    id:          d.id,
+                    title:       d.title || d.name || '',
+                    value:       d.value || 0,
+                    dealStatus:  { id: d.dealStatus?.id, name: d.dealStatus?.name },
+                    startTime:   d.startTime  || null,
+                    createdAt:   d.createdAt  || null,
+                    updatedAt:   d.updatedAt  || null,
+                    wonAt:       d.wonAt      || null,
+                    lostAt:      d.lostAt     || null,
+                    organization:{ name: d.organization?.name || '' },
+                    owner:       { id: d.owner?.id || null, name: d.owner?.name || '' },
+                }));
             dashDeals.push(...slim);
 
             // Atualiza barra de progresso
