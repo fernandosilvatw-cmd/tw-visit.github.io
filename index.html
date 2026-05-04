@@ -893,9 +893,6 @@ input[type="range"]::-webkit-slider-thumb {
         <button class="nav-item" onclick="navegarDashboard('chile', this)">
             <i class="fas fa-flag"></i><span>Dashboard Chile</span>
         </button>
-        <button class="nav-item" onclick="navegar('produtos', this)">
-            <i class="fas fa-boxes"></i><span>Produtos</span>
-        </button>
         <button class="nav-item" onclick="navegar('sobre', this)">
             <i class="fas fa-info-circle"></i><span>Sobre</span>
         </button>
@@ -1017,6 +1014,26 @@ input[type="range"]::-webkit-slider-thumb {
                 <div class="dash-card-val" id="dm-ini-val">—</div>
                 <div class="dash-card-sub">total no período</div>
             </div>
+        </div>
+
+        <!-- Breakdown por produto (ganhos + iniciados) -->
+        <div class="dash-table" id="dash-prod-tabela" style="display:none;margin-bottom:20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #f1f5f9;background:#fafafa;">
+                <span style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;">
+                    <i class="fas fa-boxes" style="color:#2563eb;margin-right:6px;"></i>Negócios por Produto
+                </span>
+            </div>
+            <div style="display:grid;grid-template-columns:1.8fr 0.7fr 1.3fr 0.7fr 1.3fr;
+                        background:#f8fafc;padding:10px 18px;border-bottom:1px solid #f1f5f9;">
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Produto</span>
+                <span style="font-size:10px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.5px;">Ganhos Qtd</span>
+                <span style="font-size:10px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.5px;">Ganhos Valor</span>
+                <span style="font-size:10px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:0.5px;">Iniciados Qtd</span>
+                <span style="font-size:10px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:0.5px;">Iniciados Valor</span>
+            </div>
+            <div id="dash-prod-body"></div>
+            <div id="dash-prod-total" style="display:grid;grid-template-columns:1.8fr 0.7fr 1.3fr 0.7fr 1.3fr;
+                        padding:12px 18px;border-top:2px solid #e2e8f0;background:#f8fafc;"></div>
         </div>
 
         <!-- Tabela de negócios recentes -->
@@ -1513,52 +1530,6 @@ input[type="range"]::-webkit-slider-thumb {
     <!-- ======================================================
          PÁGINA: DASHBOARD POR PRODUTOS
          ====================================================== -->
-    <div class="page-section" id="page-produtos">
-        <div class="page-header">
-            <h1>Negócios por Produto</h1>
-            <p>Ganhos e iniciados agrupados por linha de produto</p>
-        </div>
-
-        <!-- Filtros -->
-        <div class="dash-filters">
-            <div class="fg" style="flex:0 0 160px;">
-                <label>Data Inicial</label>
-                <input type="date" id="prod-ini">
-            </div>
-            <div class="fg" style="flex:0 0 160px;">
-                <label>Data Final</label>
-                <input type="date" id="prod-fim">
-            </div>
-            <button class="btn btn-primary" onclick="renderizarProdutos()" style="margin-bottom:1px;">
-                <i class="fas fa-filter"></i> Aplicar
-            </button>
-            <button class="btn btn-secondary" onclick="limparFiltroProdutos()" style="margin-bottom:1px;">
-                <i class="fas fa-times"></i> Limpar
-            </button>
-            <div id="prod-aviso" style="margin-left:auto;font-size:12px;color:#94a3b8;align-self:center;"></div>
-        </div>
-
-        <div id="prod-sem-dados" style="display:none;background:#fef3c7;color:#92400e;padding:14px 18px;border-radius:10px;margin-bottom:16px;font-size:13px;">
-            <i class="fas fa-info-circle"></i> Carregue o Dashboard primeiro para ter os dados disponíveis.
-        </div>
-
-        <!-- Tabela de produtos -->
-        <div class="dash-table" id="prod-tabela" style="display:none;">
-            <div style="display:grid;grid-template-columns:1.8fr 0.7fr 1.3fr 0.7fr 1.3fr;
-                        background:#f8fafc;padding:10px 18px;border-bottom:1px solid #f1f5f9;">
-                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Produto</span>
-                <span style="font-size:10px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.5px;">Ganhos Qtd</span>
-                <span style="font-size:10px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.5px;">Ganhos Valor</span>
-                <span style="font-size:10px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:0.5px;">Iniciados Qtd</span>
-                <span style="font-size:10px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:0.5px;">Iniciados Valor</span>
-            </div>
-            <div id="prod-body"></div>
-            <!-- Totais -->
-            <div id="prod-total" style="display:grid;grid-template-columns:1.8fr 0.7fr 1.3fr 0.7fr 1.3fr;
-                        padding:12px 18px;border-top:2px solid #e2e8f0;background:#f8fafc;"></div>
-        </div>
-    </div>
-
     <!-- ======================================================
          PÁGINA: NEGÓCIOS GANHOS (drill-down do dashboard)
          ====================================================== -->
@@ -1789,7 +1760,6 @@ function navegar(pagina, elClicado) {
     // Ações específicas por página
     if (pagina === 'dashboard')  carregarDashboard();
     if (pagina === 'historico')  renderHistorico();
-    if (pagina === 'produtos')   carregarDashProdutos();
     if (pagina === 'configuracoes') {
         document.getElementById('cfg-nome').value = lerConfig().nome || '';
         if (sessaoAtual?.role === 'admin') renderizarListaUsuarios();
@@ -3337,8 +3307,9 @@ function renderizarMetricas() {
     document.getElementById('dm-ini-qtd').textContent = iniciados.length;
     document.getElementById('dm-ini-val').textContent = fmtValor(vIni);
 
-    // Mostra os cards
+    // Mostra os cards e renderiza breakdown por produto com os mesmos arrays
     document.getElementById('dash-cards').style.display = 'grid';
+    renderizarBreakdownProdutos(ganhos, iniciados);
 
     // Tabela dos 20 mais recentes (ordenados por data)
     const recentes = [...iniciados]
@@ -3470,105 +3441,35 @@ function recarregarDash() {
 }
 
 // =========================================================
-// DASHBOARD POR PRODUTOS
+// BREAKDOWN POR PRODUTO (integrado ao Dashboard)
 // =========================================================
 
-// Mapeamento: label exibido → nome exato na API do Agendor
 const PRODUTOS_DASHBOARD = [
     { label: 'Equipamentos & Softwares', api: 'Equipamentos & Softwares' },
     { label: 'Cisco',                    api: 'Cisco'                    },
-    { label: 'Measurand',               api: 'Measurand'               },
-    { label: 'RCT',                      api: 'RCT'                     },
-    { label: 'RST',                      api: 'RST'                     },
-    { label: 'Serviços',                api: 'Serviços'               },
-    { label: 'Sisgeo',                   api: 'Sisgeo'                  },
-    { label: 'worldSensing',             api: 'Worldsensing'            },
+    { label: 'Measurand',                api: 'Measurand'                },
+    { label: 'RCT',                      api: 'RCT'                      },
+    { label: 'RST',                      api: 'RST'                      },
+    { label: 'Serviços',                 api: 'Serviços'                 },
+    { label: 'Sisgeo',                   api: 'Sisgeo'                   },
+    { label: 'worldSensing',             api: 'Worldsensing'             },
 ];
 
-function carregarDashProdutos() {
-    // Define período padrão se vazio
-    const hoje = new Date().toISOString().split('T')[0];
-    if (!document.getElementById('prod-ini').value) {
-        const d = new Date(); d.setMonth(d.getMonth() - 12);
-        document.getElementById('prod-ini').value =
-            d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-01';
-    }
-    if (!document.getElementById('prod-fim').value) {
-        document.getElementById('prod-fim').value = hoje;
-    }
-
-    if (!dashDeals.length) {
-        document.getElementById('prod-sem-dados').style.display = 'block';
-        document.getElementById('prod-tabela').style.display = 'none';
-        return;
-    }
-    document.getElementById('prod-sem-dados').style.display = 'none';
-    renderizarProdutos();
-}
-
-function limparFiltroProdutos() {
-    document.getElementById('prod-ini').value = '';
-    document.getElementById('prod-fim').value = '';
-    renderizarProdutos();
-}
-
-function renderizarProdutos() {
-    if (!dashDeals.length) { carregarDashProdutos(); return; }
-
-    const iniStr = document.getElementById('prod-ini').value;
-    const fimStr = document.getElementById('prod-fim').value;
-    const ini = iniStr ? new Date(iniStr + 'T00:00:00') : null;
-    const fim = fimStr ? new Date(fimStr + 'T23:59:59') : null;
-    const semFiltro = !ini && !fim;
-
-    const dentroProd = s => {
-        if (!s) return false;
-        const dt = new Date(s);
-        if (ini && dt < ini) return false;
-        if (fim && dt > fim) return false;
-        return true;
-    };
-
-    // Aplica contexto Brasil/Chile
-    const base = filtrarPorContexto(dashDeals);
-
-    // Ganhos do período (dealStatus=2 + wonAt no período)
-    const ganhosPeriodo = base.filter(d => {
-        if (d.dealStatus?.id !== 2) return false;
-        if (!d.wonAt) return false;
-        return semFiltro || dentroProd(d.wonAt);
-    });
-
-    // Iniciados do período (createdAt no período)
-    const iniciadosPeriodo = base.filter(d =>
-        semFiltro || dentroProd(d.createdAt)
-    );
-
-    // Calcula métricas para cada produto
+// Chamado pelo renderizarMetricas() com os arrays já filtrados por data e contexto
+function renderizarBreakdownProdutos(ganhos, iniciados) {
+    const grid = 'grid-template-columns:1.8fr 0.7fr 1.3fr 0.7fr 1.3fr';
     let totalGQtd = 0, totalGVal = 0, totalIQtd = 0, totalIVal = 0;
 
     const linhas = PRODUTOS_DASHBOARD.map(prod => {
-        const nomeProd = prod.api;
+        const api = prod.api;
 
-        // Ganhos com este produto
-        const gDeals = ganhosPeriodo.filter(d =>
-            d.products?.some(p => p.n === nomeProd)
-        );
-        const gQtd = gDeals.length;
-        const gVal = gDeals.reduce((acc, d) => {
-            const p = d.products.find(x => x.n === nomeProd);
-            return acc + (p?.v || 0);
-        }, 0);
+        const gDeals = ganhos.filter(d => d.products?.some(p => p.n === api));
+        const gQtd   = gDeals.length;
+        const gVal   = gDeals.reduce((a, d) => a + (d.products.find(x => x.n === api)?.v || 0), 0);
 
-        // Iniciados com este produto
-        const iDeals = iniciadosPeriodo.filter(d =>
-            d.products?.some(p => p.n === nomeProd)
-        );
-        const iQtd = iDeals.length;
-        const iVal = iDeals.reduce((acc, d) => {
-            const p = d.products.find(x => x.n === nomeProd);
-            return acc + (p?.v || 0);
-        }, 0);
+        const iDeals = iniciados.filter(d => d.products?.some(p => p.n === api));
+        const iQtd   = iDeals.length;
+        const iVal   = iDeals.reduce((a, d) => a + (d.products.find(x => x.n === api)?.v || 0), 0);
 
         totalGQtd += gQtd; totalGVal += gVal;
         totalIQtd += iQtd; totalIVal += iVal;
@@ -3576,12 +3477,10 @@ function renderizarProdutos() {
         return { label: prod.label, gQtd, gVal, iQtd, iVal };
     });
 
-    // Renderiza linhas
-    const grid = 'grid-template-columns:1.8fr 0.7fr 1.3fr 0.7fr 1.3fr';
-    document.getElementById('prod-body').innerHTML = linhas.map(r => `
+    document.getElementById('dash-prod-body').innerHTML = linhas.map(r => `
         <div style="display:grid;${grid};padding:11px 18px;
                     border-bottom:1px solid #f8fafc;align-items:center;transition:background 0.12s;"
-             onmouseover="this.style.background='#f8fafc';"
+             onmouseover="this.style.background='#f0fdf4';"
              onmouseout="this.style.background='';">
             <div style="font-size:13px;font-weight:600;color:#0f172a;">${r.label}</div>
             <div style="font-size:14px;font-weight:700;color:#16a34a;">${r.gQtd}</div>
@@ -3591,17 +3490,14 @@ function renderizarProdutos() {
         </div>`
     ).join('');
 
-    // Linha de totais
-    document.getElementById('prod-total').innerHTML = `
-        <div style="font-size:12px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:0.5px;">TOTAL</div>
+    document.getElementById('dash-prod-total').innerHTML = `
+        <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:0.5px;">TOTAL</div>
         <div style="font-size:15px;font-weight:800;color:#16a34a;">${totalGQtd}</div>
         <div style="font-size:13px;font-weight:800;color:#15803d;">${fmtValor(totalGVal)}</div>
         <div style="font-size:15px;font-weight:800;color:#2563eb;">${totalIQtd}</div>
         <div style="font-size:13px;font-weight:800;color:#1d4ed8;">${fmtValor(totalIVal)}</div>`;
 
-    document.getElementById('prod-tabela').style.display = 'block';
-    document.getElementById('prod-aviso').textContent =
-        `${base.length} negócios analisados · ${dashContexto === 'chile' ? 'Chile' : 'Brasil'}`;
+    document.getElementById('dash-prod-tabela').style.display = 'block';
 }
 
 // =========================================================
