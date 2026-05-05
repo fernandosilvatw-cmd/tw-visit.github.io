@@ -1017,6 +1017,17 @@ input[type="range"]::-webkit-slider-thumb {
                 <div class="dash-card-val" id="dm-ini-val">—</div>
                 <div class="dash-card-sub" id="dm-ini-sub">clique para ver a lista</div>
             </div>
+            <!-- 3º: Negócios Perdidos -->
+            <div class="dash-card verm" onclick="abrirListaPerdidos()"
+                 style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;"
+                 onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(220,38,38,0.2)';"
+                 onmouseout="this.style.transform='';this.style.boxShadow='';">
+                <div class="dash-card-ico"><i class="fas fa-times-circle"></i></div>
+                <div class="dash-card-label">Perdidos <i class="fas fa-external-link-alt" style="font-size:9px;opacity:0.6;margin-left:4px;"></i></div>
+                <div class="dash-card-num" id="dm-per-qtd">—</div>
+                <div class="dash-card-val" id="dm-per-val">—</div>
+                <div class="dash-card-sub" id="dm-per-sub">clique para ver a lista</div>
+            </div>
         </div>
 
         <!-- Breakdown por produto (ganhos + iniciados) -->
@@ -1039,16 +1050,6 @@ input[type="range"]::-webkit-slider-thumb {
                         padding:12px 18px;border-top:2px solid #e2e8f0;background:#f8fafc;"></div>
         </div>
 
-        <!-- Tabela de negócios recentes -->
-        <div class="dash-table" id="dash-tabela" style="display:none;">
-            <div class="dash-table-head">
-                <span>Negócio</span>
-                <span>Empresa</span>
-                <span>Valor</span>
-                <span>Status</span>
-            </div>
-            <div id="dash-tabela-body"></div>
-        </div>
     </div>
 
     <!-- ======================================================
@@ -1619,6 +1620,45 @@ input[type="range"]::-webkit-slider-thumb {
         </div>
     </div>
 
+    <!-- ======================================================
+         PÁGINA: NEGÓCIOS PERDIDOS (drill-down com seleção)
+         ====================================================== -->
+    <div class="page-section" id="page-perdidos">
+        <div class="page-header" style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="voltarDashboard()" style="margin-top:4px;flex-shrink:0;">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </button>
+            <div>
+                <h1>Negócios Perdidos</h1>
+                <p id="perdidos-subtitulo">—</p>
+            </div>
+        </div>
+        <div style="background:white;border-radius:10px;padding:14px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.07);margin-bottom:16px;display:flex;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div>
+                <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Selecionados para a soma</div>
+                <div style="font-size:15px;font-weight:700;color:#0f172a;margin-top:2px;" id="perdidos-resumo">—</div>
+            </div>
+            <div style="margin-left:auto;display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" onclick="selecionarTodosDeal('perdidos')">
+                    <i class="fas fa-check-square"></i> Selecionar todos
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="limparSelecaoDeal('perdidos')">
+                    <i class="fas fa-square"></i> Desmarcar todos
+                </button>
+            </div>
+        </div>
+        <div class="dash-table">
+            <div style="display:grid;grid-template-columns:36px 2.5fr 1.5fr 1fr 1fr;background:#f8fafc;padding:10px 18px;border-bottom:1px solid #f1f5f9;">
+                <span></span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Negócio</span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Empresa</span>
+                <span style="font-size:10px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:0.5px;">Última Atualização</span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Valor</span>
+            </div>
+            <div id="perdidos-lista-body"></div>
+        </div>
+    </div>
+
 </main><!-- fim main-content -->
 
 <!-- ============================================================
@@ -1721,7 +1761,16 @@ input[type="range"]::-webkit-slider-thumb {
             <h2 id="prod-drill-titulo" style="display:flex;align-items:center;gap:8px;">—</h2>
             <button class="btn-close" onclick="fecharProdutoDrill()"><i class="fas fa-times"></i></button>
         </div>
-        <div class="modal-body" style="padding:20px 24px;">
+        <div class="modal-body" style="padding:16px 24px 20px;">
+            <!-- Filtro por responsável -->
+            <div style="margin-bottom:12px;">
+                <select id="prod-drill-filtro-resp"
+                        onchange="filtrarProdutoDrillPorResp()"
+                        style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;
+                               font-family:Inter,sans-serif;font-size:13px;outline:none;background:white;">
+                    <option value="">Todos os responsáveis</option>
+                </select>
+            </div>
             <!-- Cabeçalho das colunas -->
             <div style="display:grid;grid-template-columns:2fr 1.3fr 1.1fr 0.7fr 1.1fr;
                         padding:8px 0;border-bottom:2px solid #e2e8f0;margin-bottom:4px;">
@@ -1731,7 +1780,7 @@ input[type="range"]::-webkit-slider-thumb {
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Data</span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Valor Produto</span>
             </div>
-            <div id="prod-drill-body" style="max-height:480px;overflow-y:auto;"></div>
+            <div id="prod-drill-body" style="max-height:420px;overflow-y:auto;"></div>
         </div>
     </div>
 </div>
@@ -3173,9 +3222,11 @@ const DASH_CACHE_TTL_MS = 30 * 60 * 1000;
 let dashCarregadoEm        = null;
 let dashGanhos             = [];
 let dashIniciados          = [];
-let dashEmAndamento        = []; // deals em andamento do período (para produto drill-down)
+let dashPerdidos           = [];
+let dashEmAndamento        = [];
 let dashGanhosExcluidos    = new Set();
 let dashIniciadosExcluidos = new Set();
+let dashPerdidosExcluidos  = new Set();
 let dashContexto = 'brasil'; // 'brasil' | 'chile'
 
 // IDs dos usuários Chile no Agendor (mais confiável que nome)
@@ -3320,9 +3371,9 @@ function fmtValor(n) {
 // Aplica filtro de data e renderiza métricas
 // ---------------------------------------------------------
 function aplicarFiltroDash() {
-    // Ao mudar o filtro, zera exclusões (deals do período antigo não valem)
     dashGanhosExcluidos.clear();
     dashIniciadosExcluidos.clear();
+    dashPerdidosExcluidos.clear();
     renderizarMetricas();
 }
 
@@ -3331,6 +3382,7 @@ function limparFiltroDash() {
     document.getElementById('dash-fim').value = '';
     dashGanhosExcluidos.clear();
     dashIniciadosExcluidos.clear();
+    dashPerdidosExcluidos.clear();
     renderizarMetricas();
 }
 
@@ -3362,90 +3414,68 @@ function renderizarMetricas() {
     };
 
     // Listas completas do período (para o drill-down mostrar todos)
+    // Listas brutas por status
     const ganhosBrutos = base.filter(d => {
         if (d.dealStatus?.id !== 2) return false;
         if (!d.wonAt) return false;
-        if (semFiltro) return true;
-        return dentro(d.wonAt);
+        return semFiltro || dentro(d.wonAt);
     });
-    const iniciadosBrutos = base.filter(d =>
-        semFiltro || dentro(d.createdAt)
-    );
-
-    // Salva listas completas para o drill-down
-    dashGanhos    = ganhosBrutos;
-    dashIniciados = iniciadosBrutos;
-
-    // Aplica exclusões do usuário para os totais dos cards
-    const ganhos    = ganhosBrutos.filter(d => !dashGanhosExcluidos.has(d.id));
-    const iniciados = iniciadosBrutos.filter(d => !dashIniciadosExcluidos.has(d.id));
-
-    const soma = arr => arr.reduce((acc, d) => acc + (d.value || 0), 0);
-    const vGan = soma(ganhos);
-    const vIni = soma(iniciados);
-
-    // Atualiza cards com indicador de exclusões
-    const exclG = dashGanhosExcluidos.size;
-    const exclI = dashIniciadosExcluidos.size;
-    document.getElementById('dm-gan-qtd').textContent = ganhos.length;
-    document.getElementById('dm-gan-val').textContent = fmtValor(vGan);
-    document.getElementById('dm-gan-sub').textContent = exclG > 0
-        ? `${exclG} excluído(s) · clique para gerenciar` : 'clique para ver a lista';
-    document.getElementById('dm-ini-qtd').textContent = iniciados.length;
-    document.getElementById('dm-ini-val').textContent = fmtValor(vIni);
-    document.getElementById('dm-ini-sub').textContent = exclI > 0
-        ? `${exclI} excluído(s) · clique para gerenciar` : 'clique para ver a lista';
-
-    // Em Andamento (dealStatus=1) filtrado por createdAt — para o breakdown por produto
+    const iniciadosBrutos = base.filter(d => semFiltro || dentro(d.createdAt));
+    const perdidosBrutos  = base.filter(d => {
+        if (d.dealStatus?.id !== 3) return false;
+        return semFiltro || dentro(d.lostAt || d.updatedAt);
+    });
     const emAndamentoBrutos = base.filter(d => {
         if (d.dealStatus?.id !== 1) return false;
-        if (semFiltro) return true;
-        return dentro(d.createdAt);
+        return semFiltro || dentro(d.createdAt);
     });
+
+    // Salva listas para os drill-downs
+    dashGanhos      = ganhosBrutos;
+    dashIniciados   = iniciadosBrutos;
+    dashPerdidos    = perdidosBrutos;
     dashEmAndamento = emAndamentoBrutos;
 
-    // Mostra os cards e breakdown por produto
+    // Aplica exclusões para os totais dos cards
+    const ganhos    = ganhosBrutos.filter(d => !dashGanhosExcluidos.has(d.id));
+    const iniciados = iniciadosBrutos.filter(d => !dashIniciadosExcluidos.has(d.id));
+    const perdidos  = perdidosBrutos.filter(d => !dashPerdidosExcluidos.has(d.id));
+
+    const soma = arr => arr.reduce((acc, d) => acc + (d.value || 0), 0);
+
+    // Atualiza os três cards
+    const subLabel = (size) => size > 0 ? `${size} excluído(s) · clique para gerenciar` : 'clique para ver a lista';
+
+    document.getElementById('dm-gan-qtd').textContent = ganhos.length;
+    document.getElementById('dm-gan-val').textContent = fmtValor(soma(ganhos));
+    document.getElementById('dm-gan-sub').textContent = subLabel(dashGanhosExcluidos.size);
+
+    document.getElementById('dm-ini-qtd').textContent = iniciados.length;
+    document.getElementById('dm-ini-val').textContent = fmtValor(soma(iniciados));
+    document.getElementById('dm-ini-sub').textContent = subLabel(dashIniciadosExcluidos.size);
+
+    document.getElementById('dm-per-qtd').textContent = perdidos.length;
+    document.getElementById('dm-per-val').textContent = fmtValor(soma(perdidos));
+    document.getElementById('dm-per-sub').textContent = subLabel(dashPerdidosExcluidos.size);
+
+    // Mostra cards e breakdown por produto
     document.getElementById('dash-cards').style.display = 'grid';
     renderizarBreakdownProdutos(ganhos, emAndamentoBrutos);
-
-    // Tabela dos 20 mais recentes (ordenados por data)
-    const recentes = [...iniciados]
-        .sort((a, b) => new Date(b.startTime || b.createdAt || 0) - new Date(a.startTime || a.createdAt || 0))
-        .slice(0, 20);
-
-    renderizarTabelaDash(recentes);
 }
 
 // ---------------------------------------------------------
-// Tabela dos negócios recentes
 // ---------------------------------------------------------
-function renderizarTabelaDash(lista) {
-    if (lista.length === 0) {
-        document.getElementById('dash-tabela').style.display = 'none';
-        return;
-    }
-
-    const mapStatus = d => {
-        const id = d.dealStatus?.id;
-        if (id === 2 || d.wonAt)  return '<span class="ds-status ds-ganho">✓ Ganho</span>';
-        if (id === 3 || d.lostAt) return '<span class="ds-status ds-perdido">✗ Perdido</span>';
-        return '<span class="ds-status ds-andamento">↻ Andamento</span>';
-    };
-
-    document.getElementById('dash-tabela-body').innerHTML = lista.map(d => `
-        <div class="dash-table-row">
-            <div style="font-size:13px;font-weight:600;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.title||''}">
-                ${d.title || '—'}
-            </div>
-            <div style="font-size:12px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                ${d.organization?.name || '—'}
-            </div>
-            <div style="font-size:13px;font-weight:600;color:#0f172a;">${fmtValor(d.value)}</div>
-            <div>${mapStatus(d)}</div>
-        </div>`
-    ).join('');
-
-    document.getElementById('dash-tabela').style.display = 'block';
+// NEGÓCIOS PERDIDOS — drill-down com seleção
+// ---------------------------------------------------------
+function abrirListaPerdidos() {
+    if (!dashPerdidos.length) { toast('Carregue o dashboard primeiro.', 'err'); return; }
+    const ini = document.getElementById('dash-ini').value;
+    const fim = document.getElementById('dash-fim').value;
+    document.getElementById('perdidos-subtitulo').textContent = _legendaPeriodo(ini, fim);
+    _renderizarListaSelecionavel('perdidos', dashPerdidos, dashPerdidosExcluidos, 'perdidos-lista-body',
+        d => ({ data: d.lostAt || d.updatedAt, cor: '#dc2626' }));
+    atualizarSummaryLista('perdidos');
+    _navPage('page-perdidos');
 }
 
 // ---------------------------------------------------------
@@ -3533,8 +3563,10 @@ function _renderizarListaSelecionavel(tipo, lista, excluidos, bodyId, metaDeal) 
 // Controles de seleção
 // ---------------------------------------------------------
 function toggleExclusao(tipo, id) {
-    const set = tipo === 'ganhos' ? dashGanhosExcluidos : dashIniciadosExcluidos;
-    const lista = tipo === 'ganhos' ? dashGanhos : dashIniciados;
+    const sets  = { ganhos: dashGanhosExcluidos, iniciados: dashIniciadosExcluidos, perdidos: dashPerdidosExcluidos };
+    const listas = { ganhos: dashGanhos, iniciados: dashIniciados, perdidos: dashPerdidos };
+    const set  = sets[tipo]  || new Set();
+    const lista = listas[tipo] || [];
     if (set.has(id)) set.delete(id); else set.add(id);
 
     // Atualiza visual da linha
@@ -3545,8 +3577,10 @@ function toggleExclusao(tipo, id) {
 }
 
 function atualizarSummaryLista(tipo) {
-    const lista     = tipo === 'ganhos' ? dashGanhos : dashIniciados;
-    const excluidos = tipo === 'ganhos' ? dashGanhosExcluidos : dashIniciadosExcluidos;
+    const listas = { ganhos: dashGanhos, iniciados: dashIniciados, perdidos: dashPerdidos };
+    const exclui = { ganhos: dashGanhosExcluidos, iniciados: dashIniciadosExcluidos, perdidos: dashPerdidosExcluidos };
+    const lista     = listas[tipo] || [];
+    const excluidos = exclui[tipo] || new Set();
     const incluidos = lista.filter(d => !excluidos.has(d.id));
     const valor     = incluidos.reduce((a, d) => a + (d.value || 0), 0);
     const el = document.getElementById(`${tipo}-resumo`);
@@ -3556,8 +3590,10 @@ function atualizarSummaryLista(tipo) {
 }
 
 function selecionarTodosDeal(tipo) {
-    const set = tipo === 'ganhos' ? dashGanhosExcluidos : dashIniciadosExcluidos;
-    const lista = tipo === 'ganhos' ? dashGanhos : dashIniciados;
+    const sets  = { ganhos: dashGanhosExcluidos, iniciados: dashIniciadosExcluidos, perdidos: dashPerdidosExcluidos };
+    const listas = { ganhos: dashGanhos, iniciados: dashIniciados, perdidos: dashPerdidos };
+    const set  = sets[tipo]  || new Set();
+    const lista = listas[tipo] || [];
     set.clear();
     lista.forEach(d => {
         const row = document.getElementById(`row-${tipo}-${d.id}`);
@@ -3567,8 +3603,10 @@ function selecionarTodosDeal(tipo) {
 }
 
 function limparSelecaoDeal(tipo) {
-    const set = tipo === 'ganhos' ? dashGanhosExcluidos : dashIniciadosExcluidos;
-    const lista = tipo === 'ganhos' ? dashGanhos : dashIniciados;
+    const sets  = { ganhos: dashGanhosExcluidos, iniciados: dashIniciadosExcluidos, perdidos: dashPerdidosExcluidos };
+    const listas = { ganhos: dashGanhos, iniciados: dashIniciados, perdidos: dashPerdidos };
+    const set  = sets[tipo]  || new Set();
+    const lista = listas[tipo] || [];
     lista.forEach(d => set.add(d.id));
     lista.forEach(d => {
         const row = document.getElementById(`row-${tipo}-${d.id}`);
@@ -3591,6 +3629,9 @@ function voltarDashboard() {
 function recarregarDash() {
     dashDeals       = [];
     dashCarregadoEm = null;
+    dashGanhosExcluidos.clear();
+    dashIniciadosExcluidos.clear();
+    dashPerdidosExcluidos.clear();
     buscarTodosNegociosDash();
 }
 
@@ -3679,65 +3720,73 @@ function renderizarBreakdownProdutos(ganhos, emAndamento) {
 }
 
 // ---------------------------------------------------------
+// Dados salvos para filtro por responsável
+let _drillApi = '', _drillGDeals = [], _drillADeals = [];
+
 // Drill-down: abre modal com todos os deals de um produto
 // ---------------------------------------------------------
 function abrirProdutoDrillDown(api, label) {
     const semProd = api === '__sem_produto__';
+    const filtra  = arr => semProd ? arr.filter(d => !d.products?.length)
+                                   : arr.filter(d => d.products?.some(p => p.n === api));
 
-    const filtraProd = (arr) => semProd
-        ? arr.filter(d => !d.products?.length)
-        : arr.filter(d => d.products?.some(p => p.n === api));
+    _drillApi    = api;
+    _drillGDeals = filtra(dashGanhos).sort((a,b) => new Date(b.wonAt||0) - new Date(a.wonAt||0));
+    _drillADeals = filtra(dashEmAndamento).sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
 
-    const gDeals = filtraProd(dashGanhos).sort((a, b) => new Date(b.wonAt||0) - new Date(a.wonAt||0));
-    const aDeals = filtraProd(dashEmAndamento).sort((a, b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
+    // Popula select de responsáveis com os nomes únicos
+    const nomes = [...new Set([..._drillGDeals, ..._drillADeals]
+        .map(d => d.owner?.name).filter(Boolean))].sort();
+    const sel = document.getElementById('prod-drill-filtro-resp');
+    sel.innerHTML = '<option value="">Todos os responsáveis</option>' +
+        nomes.map(n => `<option value="${n}">${n}</option>`).join('');
 
-    const getProdVal = (d) => semProd
-        ? (d.value || 0)
-        : (d.products?.find(p => p.n === api)?.v || 0);
+    document.getElementById('prod-drill-titulo').innerHTML =
+        `<i class="fas fa-boxes" style="color:#2563eb;"></i> ${label}`;
 
-    const fmtDt = s => s
-        ? new Date(s).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' })
-        : '—';
+    _renderizarProdDrillBody(_drillGDeals, _drillADeals, _drillApi);
+    document.getElementById('modal-produto-drill').classList.add('open');
+}
 
-    const renderSecao = (deals, titulo, cor, dateFn) => {
+function filtrarProdutoDrillPorResp() {
+    const resp = document.getElementById('prod-drill-filtro-resp').value;
+    const g = resp ? _drillGDeals.filter(d => d.owner?.name === resp) : _drillGDeals;
+    const a = resp ? _drillADeals.filter(d => d.owner?.name === resp) : _drillADeals;
+    _renderizarProdDrillBody(g, a, _drillApi);
+}
+
+function _renderizarProdDrillBody(gDeals, aDeals, api) {
+    const semProd    = api === '__sem_produto__';
+    const getProdVal = d => semProd ? (d.value||0) : (d.products?.find(p => p.n === api)?.v || 0);
+    const fmtDt      = s => s ? new Date(s).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+
+    const secao = (deals, titulo, cor, dateFn) => {
         if (!deals.length) return '';
-        const totalSec = deals.reduce((a, d) => a + getProdVal(d), 0);
+        const tot = deals.reduce((a,d) => a + getProdVal(d), 0);
         return `
         <div style="margin-bottom:4px;">
             <div style="display:flex;align-items:center;justify-content:space-between;
-                        padding:8px 0;margin-bottom:4px;border-bottom:2px solid ${cor}20;">
-                <span style="font-size:11px;font-weight:700;color:${cor};text-transform:uppercase;letter-spacing:0.8px;">
-                    ${titulo}
-                </span>
-                <span style="font-size:12px;font-weight:700;color:${cor};">
-                    ${deals.length} negócio(s) · ${fmtValor(totalSec)}
-                </span>
+                        padding:7px 0;margin-bottom:4px;border-bottom:2px solid ${cor}22;">
+                <span style="font-size:11px;font-weight:700;color:${cor};text-transform:uppercase;letter-spacing:0.8px;">${titulo}</span>
+                <span style="font-size:12px;font-weight:700;color:${cor};">${deals.length} negócio(s) · ${fmtValor(tot)}</span>
             </div>
             ${deals.map(d => `
             <div style="display:grid;grid-template-columns:2fr 1.3fr 1.1fr 0.7fr 1.1fr;padding:9px 4px;
                         border-bottom:1px solid #f8fafc;font-size:13px;align-items:center;"
                  onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='';">
-                <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-                            padding-right:8px;" title="${d.title||''}">${d.title||'—'}</div>
-                <div style="color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-                            padding-right:8px;" title="${d.organization?.name||''}">${d.organization?.name||'—'}</div>
-                <div style="color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-                            padding-right:8px;font-size:12px;">${d.owner?.name||'—'}</div>
+                <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px;" title="${d.title||''}">${d.title||'—'}</div>
+                <div style="color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px;" title="${d.organization?.name||''}">${d.organization?.name||'—'}</div>
+                <div style="color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px;font-size:12px;">${d.owner?.name||'—'}</div>
                 <div style="color:${cor};font-weight:600;font-size:12px;">${fmtDt(dateFn(d))}</div>
                 <div style="font-weight:700;color:#0f172a;">${fmtValor(getProdVal(d))}</div>
             </div>`).join('')}
         </div>`;
     };
 
-    document.getElementById('prod-drill-titulo').innerHTML =
-        `<i class="fas fa-boxes" style="color:#2563eb;"></i> ${label}`;
-
     document.getElementById('prod-drill-body').innerHTML =
-        renderSecao(gDeals, 'Ganhos',       '#16a34a', d => d.wonAt) +
-        renderSecao(aDeals, 'Em Andamento', '#2563eb', d => d.createdAt) ||
+        secao(gDeals, 'Ganhos', '#16a34a', d => d.wonAt) +
+        secao(aDeals, 'Em Andamento', '#2563eb', d => d.createdAt) ||
         '<div style="text-align:center;padding:32px;color:#94a3b8;">Nenhum negócio encontrado.</div>';
-
-    document.getElementById('modal-produto-drill').classList.add('open');
 }
 
 function fecharProdutoDrill() {
