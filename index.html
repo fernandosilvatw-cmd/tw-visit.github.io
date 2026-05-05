@@ -1566,6 +1566,10 @@ input[type="range"]::-webkit-slider-thumb {
                 <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Selecionados para a soma</div>
                 <div style="font-size:15px;font-weight:700;color:#0f172a;margin-top:2px;" id="ganhos-resumo">—</div>
             </div>
+            <select id="resp-filtro-ganhos" onchange="filtrarListaResp('ganhos')"
+                style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 11px;font-family:Inter,sans-serif;font-size:12px;outline:none;background:white;min-width:160px;">
+                <option value="">Todos os responsáveis</option>
+            </select>
             <div style="margin-left:auto;display:flex;gap:8px;">
                 <button class="btn btn-secondary btn-sm" onclick="selecionarTodosDeal('ganhos')">
                     <i class="fas fa-check-square"></i> Selecionar todos
@@ -1578,10 +1582,11 @@ input[type="range"]::-webkit-slider-thumb {
 
         <!-- Tabela de ganhos com checkboxes -->
         <div class="dash-table">
-            <div style="display:grid;grid-template-columns:36px 2.5fr 1.5fr 1fr 1fr;background:#f8fafc;padding:10px 18px;border-bottom:1px solid #f1f5f9;">
+            <div style="display:grid;grid-template-columns:36px 2fr 1.2fr 1fr 0.8fr 1fr;background:#f8fafc;padding:10px 18px;border-bottom:1px solid #f1f5f9;">
                 <span></span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Negócio</span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Empresa</span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Responsável</span>
                 <span style="font-size:10px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:0.5px;">Data do Ganho</span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Valor</span>
             </div>
@@ -1609,6 +1614,10 @@ input[type="range"]::-webkit-slider-thumb {
                 <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Selecionados para a soma</div>
                 <div style="font-size:15px;font-weight:700;color:#0f172a;margin-top:2px;" id="iniciados-resumo">—</div>
             </div>
+            <select id="resp-filtro-iniciados" onchange="filtrarListaResp('iniciados')"
+                style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 11px;font-family:Inter,sans-serif;font-size:12px;outline:none;background:white;min-width:160px;">
+                <option value="">Todos os responsáveis</option>
+            </select>
             <div style="margin-left:auto;display:flex;gap:8px;">
                 <button class="btn btn-secondary btn-sm" onclick="selecionarTodosDeal('iniciados')">
                     <i class="fas fa-check-square"></i> Selecionar todos
@@ -1621,10 +1630,11 @@ input[type="range"]::-webkit-slider-thumb {
 
         <!-- Tabela de iniciados com checkboxes -->
         <div class="dash-table">
-            <div style="display:grid;grid-template-columns:36px 2.5fr 1.5fr 1fr 1fr;background:#f8fafc;padding:10px 18px;border-bottom:1px solid #f1f5f9;">
+            <div style="display:grid;grid-template-columns:36px 2fr 1.2fr 1fr 0.8fr 1fr;background:#f8fafc;padding:10px 18px;border-bottom:1px solid #f1f5f9;">
                 <span></span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Negócio</span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Empresa</span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Responsável</span>
                 <span style="font-size:10px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:0.5px;">Data de Início</span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Valor</span>
             </div>
@@ -1650,6 +1660,10 @@ input[type="range"]::-webkit-slider-thumb {
                 <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Selecionados para a soma</div>
                 <div style="font-size:15px;font-weight:700;color:#0f172a;margin-top:2px;" id="perdidos-resumo">—</div>
             </div>
+            <select id="resp-filtro-perdidos" onchange="filtrarListaResp('perdidos')"
+                style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 11px;font-family:Inter,sans-serif;font-size:12px;outline:none;background:white;min-width:160px;">
+                <option value="">Todos os responsáveis</option>
+            </select>
             <div style="margin-left:auto;display:flex;gap:8px;">
                 <button class="btn btn-secondary btn-sm" onclick="selecionarTodosDeal('perdidos')">
                     <i class="fas fa-check-square"></i> Selecionar todos
@@ -1660,10 +1674,11 @@ input[type="range"]::-webkit-slider-thumb {
             </div>
         </div>
         <div class="dash-table">
-            <div style="display:grid;grid-template-columns:36px 2.5fr 1.5fr 1fr 1fr;background:#f8fafc;padding:10px 18px;border-bottom:1px solid #f1f5f9;">
+            <div style="display:grid;grid-template-columns:36px 2fr 1.2fr 1fr 0.8fr 1fr;background:#f8fafc;padding:10px 18px;border-bottom:1px solid #f1f5f9;">
                 <span></span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Negócio</span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Empresa</span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Responsável</span>
                 <span style="font-size:10px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:0.5px;">Última Atualização</span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Valor</span>
             </div>
@@ -1807,7 +1822,13 @@ input[type="range"]::-webkit-slider-thumb {
             <button class="btn-close" onclick="fecharRankingDrill()"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body" style="padding:16px 24px 20px;">
-            <div id="ranking-drill-resumo" style="font-size:13px;color:#64748b;margin-bottom:12px;"></div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+                <div id="ranking-drill-resumo" style="font-size:13px;color:#64748b;flex:1;"></div>
+                <select id="resp-filtro-ranking" onchange="filtrarRankingPorResp()"
+                    style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 11px;font-family:Inter,sans-serif;font-size:12px;outline:none;background:white;min-width:180px;">
+                    <option value="">Todos os responsáveis</option>
+                </select>
+            </div>
             <div style="display:grid;grid-template-columns:2.5fr 1.5fr 1.1fr 1fr;
                         padding:8px 0;border-bottom:2px solid #e2e8f0;margin-bottom:4px;">
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Negócio</span>
@@ -3507,9 +3528,9 @@ function renderizarMetricas() {
 // ---------------------------------------------------------
 function abrirListaPerdidos() {
     if (!dashPerdidos.length) { toast('Carregue o dashboard primeiro.', 'err'); return; }
-    const ini = document.getElementById('dash-ini').value;
-    const fim = document.getElementById('dash-fim').value;
-    document.getElementById('perdidos-subtitulo').textContent = _legendaPeriodo(ini, fim);
+    document.getElementById('perdidos-subtitulo').textContent =
+        _legendaPeriodo(document.getElementById('dash-ini').value, document.getElementById('dash-fim').value);
+    _popularFiltroResp('perdidos', dashPerdidos);
     _renderizarListaSelecionavel('perdidos', dashPerdidos, dashPerdidosExcluidos, 'perdidos-lista-body',
         d => ({ data: d.lostAt || d.updatedAt, cor: '#dc2626' }));
     atualizarSummaryLista('perdidos');
@@ -3530,9 +3551,9 @@ function mostrarInfoCache(timestamp, total) {
 // ---------------------------------------------------------
 function abrirListaGanhos() {
     if (!dashGanhos.length) { toast('Carregue o dashboard primeiro.', 'err'); return; }
-    const ini = document.getElementById('dash-ini').value;
-    const fim = document.getElementById('dash-fim').value;
-    document.getElementById('ganhos-subtitulo').textContent = _legendaPeriodo(ini, fim);
+    document.getElementById('ganhos-subtitulo').textContent =
+        _legendaPeriodo(document.getElementById('dash-ini').value, document.getElementById('dash-fim').value);
+    _popularFiltroResp('ganhos', dashGanhos);
     _renderizarListaSelecionavel('ganhos', dashGanhos, dashGanhosExcluidos, 'ganhos-lista-body',
         d => ({ data: d.wonAt, cor: '#16a34a' }));
     atualizarSummaryLista('ganhos');
@@ -3541,9 +3562,9 @@ function abrirListaGanhos() {
 
 function abrirListaIniciados() {
     if (!dashIniciados.length) { toast('Carregue o dashboard primeiro.', 'err'); return; }
-    const ini = document.getElementById('dash-ini').value;
-    const fim = document.getElementById('dash-fim').value;
-    document.getElementById('iniciados-subtitulo').textContent = _legendaPeriodo(ini, fim);
+    document.getElementById('iniciados-subtitulo').textContent =
+        _legendaPeriodo(document.getElementById('dash-ini').value, document.getElementById('dash-fim').value);
+    _popularFiltroResp('iniciados', dashIniciados);
     _renderizarListaSelecionavel('iniciados', dashIniciados, dashIniciadosExcluidos, 'iniciados-lista-body',
         d => ({ data: d.createdAt, cor: '#2563eb' }));
     atualizarSummaryLista('iniciados');
@@ -3570,17 +3591,18 @@ function _renderizarListaSelecionavel(tipo, lista, excluidos, bodyId, metaDeal) 
     const fmtDt = s => s
         ? new Date(s).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' })
         : '—';
+    const grid = 'grid-template-columns:36px 2fr 1.2fr 1fr 0.8fr 1fr';
 
     const ordenados = [...lista].sort(
         (a, b) => new Date(b.wonAt || b.createdAt || 0) - new Date(a.wonAt || a.createdAt || 0)
     );
 
     document.getElementById(bodyId).innerHTML = ordenados.map(d => {
-        const checked  = !excluidos.has(d.id) ? 'checked' : '';
-        const opacidade = excluidos.has(d.id) ? 'opacity:0.4;' : '';
+        const checked   = !excluidos.has(d.id) ? 'checked' : '';
+        const opacidade = excluidos.has(d.id)  ? 'opacity:0.4;' : '';
         const meta = metaDeal(d);
         return `
-        <div style="display:grid;grid-template-columns:36px 2.5fr 1.5fr 1fr 1fr;padding:10px 18px;
+        <div style="display:grid;${grid};padding:10px 18px;
                     border-bottom:1px solid #f8fafc;align-items:center;transition:background 0.12s;${opacidade}"
              id="row-${tipo}-${d.id}"
              onmouseover="this.style.background='#f8fafc';"
@@ -3588,13 +3610,39 @@ function _renderizarListaSelecionavel(tipo, lista, excluidos, bodyId, metaDeal) 
             <input type="checkbox" ${checked} style="width:16px;height:16px;cursor:pointer;accent-color:${meta.cor};"
                    onchange="toggleExclusao('${tipo}', ${d.id})">
             <div style="font-size:13px;font-weight:600;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
-                 title="${d.title||''}">${d.title || '—'}</div>
+                 title="${d.title||''}">${d.title||'—'}</div>
             <div style="font-size:12px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
-                 title="${d.organization?.name||''}">${d.organization?.name || '—'}</div>
+                 title="${d.organization?.name||''}">${d.organization?.name||'—'}</div>
+            <div style="font-size:12px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                 title="${d.owner?.name||''}">${d.owner?.name||'—'}</div>
             <div style="font-size:12px;font-weight:600;color:${meta.cor};">${fmtDt(meta.data)}</div>
             <div style="font-size:13px;font-weight:700;color:#0f172a;">${fmtValor(d.value)}</div>
         </div>`;
     }).join('');
+}
+
+// Popula o select de responsáveis de uma página (ganhos/iniciados/perdidos)
+function _popularFiltroResp(tipo, lista) {
+    const nomes = [...new Set(lista.map(d => d.owner?.name).filter(Boolean))].sort();
+    const sel   = document.getElementById(`resp-filtro-${tipo}`);
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Todos os responsáveis</option>' +
+        nomes.map(n => `<option value="${n}">${n}</option>`).join('');
+    sel.value = '';
+}
+
+// Filtra a lista exibida pelo responsável selecionado (a seleção/exclusão permanece global)
+function filtrarListaResp(tipo) {
+    const filtro = document.getElementById(`resp-filtro-${tipo}`)?.value || '';
+    const listas = { ganhos: dashGanhos, iniciados: dashIniciados, perdidos: dashPerdidos };
+    const excls  = { ganhos: dashGanhosExcluidos, iniciados: dashIniciadosExcluidos, perdidos: dashPerdidosExcluidos };
+    const metas  = {
+        ganhos:    d => ({ data: d.wonAt,               cor: '#16a34a' }),
+        iniciados: d => ({ data: d.createdAt,            cor: '#2563eb' }),
+        perdidos:  d => ({ data: d.lostAt||d.updatedAt, cor: '#dc2626' }),
+    };
+    const lista    = (listas[tipo] || []).filter(d => !filtro || d.owner?.name === filtro);
+    _renderizarListaSelecionavel(tipo, lista, excls[tipo] || new Set(), `${tipo}-lista-body`, metas[tipo]);
 }
 
 // ---------------------------------------------------------
@@ -3875,16 +3923,36 @@ function renderizarRanking(deals) {
     document.getElementById('dash-ranking-section').style.display = 'block';
 }
 
+let _rankingDrillDeals = []; // salvo para filtro por responsável
+
 function abrirRankingDrill(stars, label) {
-    const deals = dashRankingBase.filter(d =>
+    _rankingDrillDeals = dashRankingBase.filter(d =>
         stars === 0 ? (!d.ranking || d.ranking === 0) : d.ranking === stars
     ).sort((a, b) => (b.value || 0) - (a.value || 0));
 
-    const total = deals.reduce((a, d) => a + (d.value || 0), 0);
-    const ests  = stars > 0 ? '★'.repeat(stars) + '☆'.repeat(5 - stars) : '—';
-
+    const ests = stars > 0 ? '★'.repeat(stars) + '☆'.repeat(5 - stars) : '—';
     document.getElementById('ranking-drill-titulo').innerHTML =
         `<span style="color:#d97706;font-size:20px;letter-spacing:-1px;">${ests}</span>&nbsp;${label}`;
+
+    // Popula o select de responsáveis
+    const nomes = [...new Set(_rankingDrillDeals.map(d => d.owner?.name).filter(Boolean))].sort();
+    const sel   = document.getElementById('resp-filtro-ranking');
+    sel.innerHTML = '<option value="">Todos os responsáveis</option>' +
+        nomes.map(n => `<option value="${n}">${n}</option>`).join('');
+    sel.value = '';
+
+    _renderizarRankingDrillBody(_rankingDrillDeals);
+    document.getElementById('modal-ranking-drill').classList.add('open');
+}
+
+function filtrarRankingPorResp() {
+    const filtro = document.getElementById('resp-filtro-ranking').value;
+    const lista  = filtro ? _rankingDrillDeals.filter(d => d.owner?.name === filtro) : _rankingDrillDeals;
+    _renderizarRankingDrillBody(lista);
+}
+
+function _renderizarRankingDrillBody(deals) {
+    const total = deals.reduce((a, d) => a + (d.value || 0), 0);
     document.getElementById('ranking-drill-resumo').textContent =
         `${deals.length} negócio(s) · Total: ${fmtValor(total)}`;
 
@@ -3901,8 +3969,6 @@ function abrirRankingDrill(stars, label) {
             <div style="font-weight:700;color:#0f172a;">${fmtValor(d.value)}</div>
         </div>`).join('')
         : '<div style="text-align:center;padding:32px;color:#94a3b8;">Nenhum negócio encontrado.</div>';
-
-    document.getElementById('modal-ranking-drill').classList.add('open');
 }
 
 function fecharRankingDrill() {
