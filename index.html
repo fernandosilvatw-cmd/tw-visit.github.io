@@ -1050,6 +1050,18 @@ input[type="range"]::-webkit-slider-thumb {
                         padding:12px 18px;border-top:2px solid #e2e8f0;background:#f8fafc;"></div>
         </div>
 
+        <!-- Ranking de negócios -->
+        <div id="dash-ranking-section" style="display:none;">
+            <div style="background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.07);overflow:hidden;">
+                <div style="display:flex;align-items:center;padding:12px 18px;border-bottom:1px solid #f1f5f9;background:#fafafa;">
+                    <span style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;">
+                        <i class="fas fa-star" style="color:#d97706;margin-right:6px;"></i>Negócios por Ranking
+                    </span>
+                </div>
+                <div id="dash-ranking-cards" style="display:grid;grid-template-columns:repeat(6,1fr);gap:0;"></div>
+            </div>
+        </div>
+
     </div>
 
     <!-- ======================================================
@@ -1785,6 +1797,29 @@ input[type="range"]::-webkit-slider-thumb {
     </div>
 </div>
 
+<!-- ============================================================
+     MODAL DRILL-DOWN DE RANKING
+     ============================================================ -->
+<div class="modal-overlay" id="modal-ranking-drill" onclick="fecharRankingDrillFora(event)">
+    <div class="modal-box" style="max-width:800px;">
+        <div class="modal-head">
+            <h2 id="ranking-drill-titulo" style="display:flex;align-items:center;gap:8px;">—</h2>
+            <button class="btn-close" onclick="fecharRankingDrill()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="padding:16px 24px 20px;">
+            <div id="ranking-drill-resumo" style="font-size:13px;color:#64748b;margin-bottom:12px;"></div>
+            <div style="display:grid;grid-template-columns:2.5fr 1.5fr 1.1fr 1fr;
+                        padding:8px 0;border-bottom:2px solid #e2e8f0;margin-bottom:4px;">
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Negócio</span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Empresa</span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Responsável</span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Valor</span>
+            </div>
+            <div id="ranking-drill-body" style="max-height:440px;overflow-y:auto;"></div>
+        </div>
+    </div>
+</div>
+
 <!-- Toast de notificação -->
 <div class="toast" id="toast">
     <i class="fas fa-check-circle" id="toast-ico"></i>
@@ -2472,6 +2507,7 @@ document.addEventListener('keydown', e => {
         fecharNegocio();
         fecharContato();
         fecharProdutoDrill();
+        fecharRankingDrill();
     }
 });
 
@@ -3326,6 +3362,7 @@ async function buscarTodosNegociosDash() {
                     lostAt:      d.lostAt     || null,
                     organization:{ name: d.organization?.name || '' },
                     owner:       { id: d.owner?.id || null, name: d.owner?.name || '' },
+                    ranking:     d.ranking || 0,
                     products:    (d.products_entities || []).map(p => ({
                         n: p.name       || '',
                         v: p.totalValue || 0
@@ -3458,9 +3495,10 @@ function renderizarMetricas() {
     document.getElementById('dm-per-val').textContent = fmtValor(soma(perdidos));
     document.getElementById('dm-per-sub').textContent = subLabel(dashPerdidosExcluidos.size);
 
-    // Mostra cards e breakdown por produto
+    // Mostra cards, breakdown por produto e ranking
     document.getElementById('dash-cards').style.display = 'grid';
     renderizarBreakdownProdutos(ganhos, emAndamentoBrutos);
+    renderizarRanking(iniciadosBrutos); // ranking usa todos os deals do período (qualquer status)
 }
 
 // ---------------------------------------------------------
@@ -3787,6 +3825,91 @@ function _renderizarProdDrillBody(gDeals, aDeals, api) {
         secao(gDeals, 'Ganhos', '#16a34a', d => d.wonAt) +
         secao(aDeals, 'Em Andamento', '#2563eb', d => d.createdAt) ||
         '<div style="text-align:center;padding:32px;color:#94a3b8;">Nenhum negócio encontrado.</div>';
+}
+
+// =========================================================
+// RANKING DE NEGÓCIOS
+// =========================================================
+
+let dashRankingBase = []; // todos os deals do período (para drill-down)
+
+const RANKING_CONFIG = [
+    { stars: 5, label: '5 Estrelas', cor: '#d97706' },
+    { stars: 4, label: '4 Estrelas', cor: '#d97706' },
+    { stars: 3, label: '3 Estrelas', cor: '#d97706' },
+    { stars: 2, label: '2 Estrelas', cor: '#94a3b8' },
+    { stars: 1, label: '1 Estrela',  cor: '#94a3b8' },
+    { stars: 0, label: 'S/Classif.', cor: '#cbd5e1' },
+];
+
+function renderizarRanking(deals) {
+    dashRankingBase = deals;
+
+    const cards = RANKING_CONFIG.map(cfg => {
+        const grupo = deals.filter(d =>
+            cfg.stars === 0 ? (!d.ranking || d.ranking === 0) : d.ranking === cfg.stars
+        );
+        const qtd  = grupo.length;
+        const val  = grupo.reduce((a, d) => a + (d.value || 0), 0);
+        const ests = cfg.stars > 0
+            ? '★'.repeat(cfg.stars) + '☆'.repeat(5 - cfg.stars)
+            : '—';
+
+        return `
+        <div onclick="abrirRankingDrill(${cfg.stars}, '${cfg.label}')"
+             style="padding:16px 14px;text-align:center;cursor:pointer;
+                    border-right:1px solid #f1f5f9;transition:background 0.15s;border-bottom:none;"
+             onmouseover="this.style.background='#fffbeb';"
+             onmouseout="this.style.background='';">
+            <div style="font-size:17px;color:${cfg.cor};letter-spacing:-1px;margin-bottom:6px;font-weight:700;">
+                ${ests}
+            </div>
+            <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;
+                        letter-spacing:0.5px;margin-bottom:8px;">${cfg.label}</div>
+            <div style="font-size:22px;font-weight:800;color:#0f172a;line-height:1;">${qtd}</div>
+            <div style="font-size:11px;font-weight:600;color:#475569;margin-top:4px;">${fmtValor(val)}</div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('dash-ranking-cards').innerHTML = cards;
+    document.getElementById('dash-ranking-section').style.display = 'block';
+}
+
+function abrirRankingDrill(stars, label) {
+    const deals = dashRankingBase.filter(d =>
+        stars === 0 ? (!d.ranking || d.ranking === 0) : d.ranking === stars
+    ).sort((a, b) => (b.value || 0) - (a.value || 0));
+
+    const total = deals.reduce((a, d) => a + (d.value || 0), 0);
+    const ests  = stars > 0 ? '★'.repeat(stars) + '☆'.repeat(5 - stars) : '—';
+
+    document.getElementById('ranking-drill-titulo').innerHTML =
+        `<span style="color:#d97706;font-size:20px;letter-spacing:-1px;">${ests}</span>&nbsp;${label}`;
+    document.getElementById('ranking-drill-resumo').textContent =
+        `${deals.length} negócio(s) · Total: ${fmtValor(total)}`;
+
+    document.getElementById('ranking-drill-body').innerHTML = deals.length ? deals.map(d => `
+        <div style="display:grid;grid-template-columns:2.5fr 1.5fr 1.1fr 1fr;padding:10px 4px;
+                    border-bottom:1px solid #f8fafc;font-size:13px;align-items:center;"
+             onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='';">
+            <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                        padding-right:8px;" title="${d.title||''}">${d.title||'—'}</div>
+            <div style="color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                        padding-right:8px;">${d.organization?.name||'—'}</div>
+            <div style="color:#475569;font-size:12px;overflow:hidden;text-overflow:ellipsis;
+                        white-space:nowrap;padding-right:8px;">${d.owner?.name||'—'}</div>
+            <div style="font-weight:700;color:#0f172a;">${fmtValor(d.value)}</div>
+        </div>`).join('')
+        : '<div style="text-align:center;padding:32px;color:#94a3b8;">Nenhum negócio encontrado.</div>';
+
+    document.getElementById('modal-ranking-drill').classList.add('open');
+}
+
+function fecharRankingDrill() {
+    document.getElementById('modal-ranking-drill').classList.remove('open');
+}
+function fecharRankingDrillFora(e) {
+    if (e.target === document.getElementById('modal-ranking-drill')) fecharRankingDrill();
 }
 
 function fecharProdutoDrill() {
