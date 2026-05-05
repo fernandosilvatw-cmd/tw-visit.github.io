@@ -3629,12 +3629,18 @@ function renderizarBreakdownProdutos(ganhos, iniciados) {
         </div>`
     ).join('');
 
+    // TOTAL usa os arrays originais (deals únicos) para bater com os cards.
+    // As linhas de produto podem sobrepor (deal com 2 produtos entra em 2 linhas),
+    // por isso a soma das linhas ≠ total real — o total vem direto da fonte.
+    const totalGReal = ganhos.reduce((a, d) => a + (d.value || 0), 0);
+    const totalIReal = iniciados.reduce((a, d) => a + (d.value || 0), 0);
+
     document.getElementById('dash-prod-total').innerHTML = `
         <div style="font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:0.5px;">TOTAL</div>
-        <div style="font-size:15px;font-weight:800;color:#16a34a;">${totalGQtd}</div>
-        <div style="font-size:13px;font-weight:800;color:#15803d;">${fmtValor(totalGVal)}</div>
-        <div style="font-size:15px;font-weight:800;color:#2563eb;">${totalIQtd}</div>
-        <div style="font-size:13px;font-weight:800;color:#1d4ed8;">${fmtValor(totalIVal)}</div>`;
+        <div style="font-size:15px;font-weight:800;color:#16a34a;">${ganhos.length}</div>
+        <div style="font-size:13px;font-weight:800;color:#15803d;">${fmtValor(totalGReal)}</div>
+        <div style="font-size:15px;font-weight:800;color:#2563eb;">${iniciados.length}</div>
+        <div style="font-size:13px;font-weight:800;color:#1d4ed8;">${fmtValor(totalIReal)}</div>`;
 
     document.getElementById('dash-prod-tabela').style.display = 'block';
 }
