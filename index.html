@@ -3597,12 +3597,31 @@ function renderizarBreakdownProdutos(ganhos, iniciados) {
         return { label: prod.label, gQtd, gVal, iQtd, iVal };
     });
 
-    document.getElementById('dash-prod-body').innerHTML = linhas.map(r => `
+    // S/Produto: deals sem nenhum produto atrelado — usa o valor total do negócio (value)
+    const semProdG = ganhos.filter(d => !d.products?.length);
+    const spGQtd   = semProdG.length;
+    const spGVal   = semProdG.reduce((a, d) => a + (d.value || 0), 0);
+
+    const semProdI = iniciados.filter(d => !d.products?.length);
+    const spIQtd   = semProdI.length;
+    const spIVal   = semProdI.reduce((a, d) => a + (d.value || 0), 0);
+
+    totalGQtd += spGQtd; totalGVal += spGVal;
+    totalIQtd += spIQtd; totalIVal += spIVal;
+
+    const todasLinhas = [
+        ...linhas,
+        { label: 'S/Produto', gQtd: spGQtd, gVal: spGVal, iQtd: spIQtd, iVal: spIVal, semProd: true }
+    ];
+
+    document.getElementById('dash-prod-body').innerHTML = todasLinhas.map(r => `
         <div style="display:grid;${grid};padding:11px 18px;
-                    border-bottom:1px solid #f8fafc;align-items:center;transition:background 0.12s;"
+                    border-bottom:1px solid #f8fafc;align-items:center;transition:background 0.12s;
+                    ${r.semProd ? 'border-top:1px dashed #e2e8f0;' : ''}"
              onmouseover="this.style.background='#f0fdf4';"
              onmouseout="this.style.background='';">
-            <div style="font-size:13px;font-weight:600;color:#0f172a;">${r.label}</div>
+            <div style="font-size:13px;font-weight:600;color:${r.semProd ? '#94a3b8' : '#0f172a'};
+                        ${r.semProd ? 'font-style:italic;' : ''}">${r.label}</div>
             <div style="font-size:14px;font-weight:700;color:#16a34a;">${r.gQtd}</div>
             <div style="font-size:13px;font-weight:600;color:#15803d;">${fmtValor(r.gVal)}</div>
             <div style="font-size:14px;font-weight:700;color:#2563eb;">${r.iQtd}</div>
