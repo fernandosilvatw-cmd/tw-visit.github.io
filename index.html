@@ -1723,10 +1723,11 @@ input[type="range"]::-webkit-slider-thumb {
         </div>
         <div class="modal-body" style="padding:20px 24px;">
             <!-- Cabeçalho das colunas -->
-            <div style="display:grid;grid-template-columns:2.5fr 1.5fr 0.8fr 1.2fr;
+            <div style="display:grid;grid-template-columns:2fr 1.3fr 1.1fr 0.7fr 1.1fr;
                         padding:8px 0;border-bottom:2px solid #e2e8f0;margin-bottom:4px;">
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Negócio</span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Empresa</span>
+                <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Responsável</span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Data</span>
                 <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Valor Produto</span>
             </div>
@@ -3713,13 +3714,15 @@ function abrirProdutoDrillDown(api, label) {
                 </span>
             </div>
             ${deals.map(d => `
-            <div style="display:grid;grid-template-columns:2.5fr 1.5fr 0.8fr 1.2fr;padding:9px 4px;
+            <div style="display:grid;grid-template-columns:2fr 1.3fr 1.1fr 0.7fr 1.1fr;padding:9px 4px;
                         border-bottom:1px solid #f8fafc;font-size:13px;align-items:center;"
                  onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='';">
                 <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
                             padding-right:8px;" title="${d.title||''}">${d.title||'—'}</div>
                 <div style="color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
                             padding-right:8px;" title="${d.organization?.name||''}">${d.organization?.name||'—'}</div>
+                <div style="color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                            padding-right:8px;font-size:12px;">${d.owner?.name||'—'}</div>
                 <div style="color:${cor};font-weight:600;font-size:12px;">${fmtDt(dateFn(d))}</div>
                 <div style="font-weight:700;color:#0f172a;">${fmtValor(getProdVal(d))}</div>
             </div>`).join('')}
