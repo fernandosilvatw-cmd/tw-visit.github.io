@@ -1841,6 +1841,65 @@ input[type="range"]::-webkit-slider-thumb {
     </div>
 </div>
 
+<!-- ============================================================
+     MODAL CRIAR TAREFA (ADM)
+     ============================================================ -->
+<div class="modal-overlay" id="modal-criar-tarefa" onclick="fecharCriarTarefaFora(event)">
+    <div class="modal-box" style="max-width:480px;">
+        <div class="modal-head">
+            <h2><i class="fas fa-tasks" style="color:#2563eb;margin-right:8px;"></i>Criar Tarefa no Agendor</h2>
+            <button class="btn-close" onclick="fecharCriarTarefa()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="padding:22px 24px;">
+            <!-- Deal vinculado (readonly) -->
+            <div class="fg" style="margin-bottom:14px;">
+                <label>Negócio vinculado</label>
+                <input type="text" id="tarefa-deal-titulo" readonly
+                    style="background:#f8fafc;cursor:default;font-weight:600;">
+                <input type="hidden" id="tarefa-deal-id">
+            </div>
+            <!-- Tipo de tarefa -->
+            <div class="fg" style="margin-bottom:14px;">
+                <label>Tipo de tarefa *</label>
+                <select id="tarefa-tipo">
+                    <option value="">Selecione...</option>
+                    <option value="LIGACAO">📞 Ligação</option>
+                    <option value="REUNIAO">🤝 Reunião</option>
+                    <option value="EMAIL">📧 E-mail</option>
+                    <option value="VISITA">🚗 Visita</option>
+                    <option value="PROPOSTA">📄 Proposta</option>
+                    <option value="TAREFA">✅ Tarefa</option>
+                    <option value="NOTA">📝 Nota</option>
+                </select>
+            </div>
+            <!-- Descrição -->
+            <div class="fg" style="margin-bottom:14px;">
+                <label>Descrição *</label>
+                <textarea id="tarefa-texto" placeholder="Descreva a tarefa..." style="min-height:70px;"></textarea>
+            </div>
+            <!-- Data limite -->
+            <div class="fg" style="margin-bottom:14px;">
+                <label>Data limite *</label>
+                <input type="date" id="tarefa-data">
+            </div>
+            <!-- Responsável -->
+            <div class="fg" style="margin-bottom:22px;">
+                <label>Responsável *</label>
+                <select id="tarefa-usuario">
+                    <option value="">Carregando usuários...</option>
+                </select>
+            </div>
+            <!-- Erro -->
+            <div id="tarefa-erro" class="login-erro" style="margin-bottom:12px;"></div>
+            <!-- Botão -->
+            <button class="btn btn-primary" style="width:100%;justify-content:center;"
+                onclick="salvarTarefa()" id="tarefa-btn">
+                <i class="fas fa-check"></i> Criar Tarefa
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Toast de notificação -->
 <div class="toast" id="toast">
     <i class="fas fa-check-circle" id="toast-ico"></i>
@@ -2529,6 +2588,7 @@ document.addEventListener('keydown', e => {
         fecharContato();
         fecharProdutoDrill();
         fecharRankingDrill();
+        fecharCriarTarefa();
     }
 });
 
@@ -3588,10 +3648,11 @@ function _navPage(id) {
 }
 
 function _renderizarListaSelecionavel(tipo, lista, excluidos, bodyId, metaDeal) {
-    const fmtDt = s => s
-        ? new Date(s).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' })
-        : '—';
-    const grid = 'grid-template-columns:36px 2fr 1.2fr 1fr 0.8fr 1fr';
+    const fmtDt   = s => s ? new Date(s).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+    const isAdmin = sessaoAtual?.role === 'admin';
+    const grid    = isAdmin
+        ? 'grid-template-columns:36px 2fr 1.2fr 1fr 0.8fr 1fr 36px'
+        : 'grid-template-columns:36px 2fr 1.2fr 1fr 0.8fr 1fr';
 
     const ordenados = [...lista].sort(
         (a, b) => new Date(b.wonAt || b.createdAt || 0) - new Date(a.wonAt || a.createdAt || 0)
@@ -3617,6 +3678,7 @@ function _renderizarListaSelecionavel(tipo, lista, excluidos, bodyId, metaDeal) 
                  title="${d.owner?.name||''}">${d.owner?.name||'—'}</div>
             <div style="font-size:12px;font-weight:600;color:${meta.cor};">${fmtDt(meta.data)}</div>
             <div style="font-size:13px;font-weight:700;color:#0f172a;">${fmtValor(d.value)}</div>
+            ${isAdmin ? _btnTarefa(d.id, d.title, d.owner?.name, d.owner?.id) : ''}
         </div>`;
     }).join('');
 }
@@ -3846,6 +3908,7 @@ function _renderizarProdDrillBody(gDeals, aDeals, api) {
     const getProdVal = d => semProd ? (d.value||0) : (d.products?.find(p => p.n === api)?.v || 0);
     const fmtDt      = s => s ? new Date(s).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
 
+    const isAdmin = sessaoAtual?.role === 'admin';
     const secao = (deals, titulo, cor, dateFn) => {
         if (!deals.length) return '';
         const tot = deals.reduce((a,d) => a + getProdVal(d), 0);
@@ -3857,7 +3920,7 @@ function _renderizarProdDrillBody(gDeals, aDeals, api) {
                 <span style="font-size:12px;font-weight:700;color:${cor};">${deals.length} negócio(s) · ${fmtValor(tot)}</span>
             </div>
             ${deals.map(d => `
-            <div style="display:grid;grid-template-columns:2fr 1.3fr 1.1fr 0.7fr 1.1fr;padding:9px 4px;
+            <div style="display:grid;grid-template-columns:2fr 1.3fr 1.1fr 0.7fr 1.1fr${isAdmin?' 36px':''};padding:9px 4px;
                         border-bottom:1px solid #f8fafc;font-size:13px;align-items:center;"
                  onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='';">
                 <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px;" title="${d.title||''}">${d.title||'—'}</div>
@@ -3865,6 +3928,7 @@ function _renderizarProdDrillBody(gDeals, aDeals, api) {
                 <div style="color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px;font-size:12px;">${d.owner?.name||'—'}</div>
                 <div style="color:${cor};font-weight:600;font-size:12px;">${fmtDt(dateFn(d))}</div>
                 <div style="font-weight:700;color:#0f172a;">${fmtValor(getProdVal(d))}</div>
+                ${isAdmin ? _btnTarefa(d.id, d.title, d.owner?.name, d.owner?.id) : ''}
             </div>`).join('')}
         </div>`;
     };
@@ -3952,13 +4016,14 @@ function filtrarRankingPorResp() {
 }
 
 function _renderizarRankingDrillBody(deals) {
-    const total = deals.reduce((a, d) => a + (d.value || 0), 0);
+    const total   = deals.reduce((a, d) => a + (d.value || 0), 0);
+    const isAdmin = sessaoAtual?.role === 'admin';
     document.getElementById('ranking-drill-resumo').textContent =
         `${deals.length} negócio(s) · Total: ${fmtValor(total)}`;
 
     document.getElementById('ranking-drill-body').innerHTML = deals.length ? deals.map(d => `
-        <div style="display:grid;grid-template-columns:2.5fr 1.5fr 1.1fr 1fr;padding:10px 4px;
-                    border-bottom:1px solid #f8fafc;font-size:13px;align-items:center;"
+        <div style="display:grid;grid-template-columns:2fr 1.3fr 1fr 1.1fr 1fr${isAdmin?' 36px':''};
+                    padding:10px 4px;border-bottom:1px solid #f8fafc;font-size:13px;align-items:center;"
              onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='';">
             <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
                         padding-right:8px;" title="${d.title||''}">${d.title||'—'}</div>
@@ -3966,7 +4031,11 @@ function _renderizarRankingDrillBody(deals) {
                         padding-right:8px;">${d.organization?.name||'—'}</div>
             <div style="color:#475569;font-size:12px;overflow:hidden;text-overflow:ellipsis;
                         white-space:nowrap;padding-right:8px;">${d.owner?.name||'—'}</div>
+            <div id="stars-deal-${d.id}" style="white-space:nowrap;">
+                ${_starsDisplay(d.id, d.ranking)}
+            </div>
             <div style="font-weight:700;color:#0f172a;">${fmtValor(d.value)}</div>
+            ${isAdmin ? _btnTarefa(d.id, d.title, d.owner?.name, d.owner?.id) : ''}
         </div>`).join('')
         : '<div style="text-align:center;padding:32px;color:#94a3b8;">Nenhum negócio encontrado.</div>';
 }
@@ -3976,6 +4045,150 @@ function fecharRankingDrill() {
 }
 function fecharRankingDrillFora(e) {
     if (e.target === document.getElementById('modal-ranking-drill')) fecharRankingDrill();
+}
+
+// =========================================================
+// CRIAR TAREFA NO AGENDOR (somente ADM)
+// =========================================================
+
+let _agendorUsuarios = []; // cache de usuários
+
+// Carrega lista de usuários do Worker (chamado uma vez)
+async function _carregarUsuarios() {
+    if (_agendorUsuarios.length) return _agendorUsuarios;
+    try {
+        const r = await fetch(`${AGENDOR_PROXY}/users`);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const d = await r.json();
+        _agendorUsuarios = (d.data || d).map(u => ({ id: u.id, nome: u.name || u.nome || '' }))
+            .filter(u => u.nome)
+            .sort((a, b) => a.nome.localeCompare(b.nome));
+    } catch {
+        _agendorUsuarios = [];
+    }
+    return _agendorUsuarios;
+}
+
+// Abre o modal de criar tarefa vinculada a um negócio
+async function abrirCriarTarefa(dealId, dealTitle, ownerName, ownerId) {
+    document.getElementById('tarefa-deal-id').value    = dealId;
+    document.getElementById('tarefa-deal-titulo').value = dealTitle;
+    document.getElementById('tarefa-tipo').value        = '';
+    document.getElementById('tarefa-texto').value       = '';
+    document.getElementById('tarefa-data').value        = '';
+    document.getElementById('tarefa-erro').classList.remove('show');
+
+    // Data padrão: 7 dias à frente
+    const d = new Date(); d.setDate(d.getDate() + 7);
+    document.getElementById('tarefa-data').value = d.toISOString().split('T')[0];
+
+    // Popula select de usuários
+    const usuarios = await _carregarUsuarios();
+    const sel = document.getElementById('tarefa-usuario');
+    sel.innerHTML = '<option value="">Selecione o responsável...</option>' +
+        usuarios.map(u => `<option value="${u.id}" ${u.id == ownerId ? 'selected' : ''}>${u.nome}</option>`).join('');
+
+    document.getElementById('modal-criar-tarefa').classList.add('open');
+}
+
+function fecharCriarTarefa() {
+    document.getElementById('modal-criar-tarefa').classList.remove('open');
+}
+function fecharCriarTarefaFora(e) {
+    if (e.target === document.getElementById('modal-criar-tarefa')) fecharCriarTarefa();
+}
+
+async function salvarTarefa() {
+    const dealId  = document.getElementById('tarefa-deal-id').value;
+    const text    = document.getElementById('tarefa-texto').value.trim();
+    const type    = document.getElementById('tarefa-tipo').value;
+    const dueDate = document.getElementById('tarefa-data').value;
+    const userId  = document.getElementById('tarefa-usuario').value;
+    const erroEl  = document.getElementById('tarefa-erro');
+    const btn     = document.getElementById('tarefa-btn');
+
+    erroEl.classList.remove('show');
+    if (!type)    { erroEl.textContent = 'Selecione o tipo de tarefa.';   erroEl.classList.add('show'); return; }
+    if (!text)    { erroEl.textContent = 'Preencha a descrição.';         erroEl.classList.add('show'); return; }
+    if (!dueDate) { erroEl.textContent = 'Informe a data limite.';        erroEl.classList.add('show'); return; }
+    if (!userId)  { erroEl.textContent = 'Selecione o responsável.';      erroEl.classList.add('show'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...';
+
+    try {
+        const r = await fetch(`${AGENDOR_PROXY}/tasks`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dealId: parseInt(dealId), text, type, dueDate, assignedUserId: parseInt(userId) })
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.erro || 'Erro ' + r.status);
+
+        fecharCriarTarefa();
+        toast('Tarefa criada com sucesso no Agendor!', 'ok');
+    } catch (e) {
+        erroEl.textContent = e.message;
+        erroEl.classList.add('show');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check"></i> Criar Tarefa';
+    }
+}
+
+// Botão de criar tarefa — inline em qualquer row
+function _btnTarefa(dealId, dealTitle, ownerName, ownerId) {
+    if (sessaoAtual?.role !== 'admin') return '';
+    const t  = (dealTitle  || '').replace(/'/g, '&#39;');
+    const on = (ownerName  || '').replace(/'/g, '&#39;');
+    return `<button title="Criar tarefa no Agendor"
+        onclick="event.stopPropagation();abrirCriarTarefa(${dealId},'${t}','${on}',${ownerId||0})"
+        style="background:none;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;
+               padding:4px 7px;color:#2563eb;font-size:12px;transition:all 0.15s;flex-shrink:0;"
+        onmouseover="this.style.background='#dbeafe';"
+        onmouseout="this.style.background='none';">
+        <i class="fas fa-tasks"></i>
+    </button>`;
+}
+
+// =========================================================
+// ATUALIZAR RANKING DE ESTRELAS (todos os usuários)
+// =========================================================
+
+async function atualizarRankingDeal(dealId, stars) {
+    try {
+        const r = await fetch(`${AGENDOR_PROXY}/deal-ranking`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dealId: parseInt(dealId), ranking: stars })
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+
+        // Atualiza em memória (cache e lista do modal)
+        [dashDeals, dashRankingBase, _rankingDrillDeals].forEach(arr =>
+            arr.forEach(d => { if (d.id === dealId) d.ranking = stars; })
+        );
+
+        // Atualiza o display do ranking na linha (sem fechar o modal)
+        const el = document.getElementById(`stars-deal-${dealId}`);
+        if (el) el.innerHTML = _starsDisplay(dealId, stars);
+
+        toast('Ranking atualizado!', 'ok');
+    } catch (e) {
+        toast('Erro ao atualizar ranking: ' + e.message, 'err');
+    }
+}
+
+// Gera o HTML das estrelas clicáveis para uma linha do modal de ranking
+function _starsDisplay(dealId, ranking) {
+    return [1,2,3,4,5].map(s => `
+        <span onclick="event.stopPropagation();atualizarRankingDeal(${dealId},${s})"
+              title="${s} estrela(s)"
+              style="cursor:pointer;font-size:16px;color:${s <= (ranking||0) ? '#d97706' : '#e2e8f0'};
+                     transition:color 0.15s;padding:0 1px;"
+              onmouseover="this.style.color='#d97706';"
+              onmouseout="this.style.color='${s <= (ranking||0) ? '#d97706' : '#e2e8f0'}';">★</span>`
+    ).join('');
 }
 
 function fecharProdutoDrill() {

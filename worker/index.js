@@ -1,21 +1,25 @@
 // Worker proxy para a API do Agendor CRM
-// Rotas:
-//   GET /                → lista de empresas (organizations)
-//   GET /deals?orgId=    → negócios de uma empresa
-//   GET /person?id=      → dados de um contato (nome, cargo, email, telefone)
+// GET  /                 → lista de empresas
+// GET  /deals?orgId=     → negócios de uma empresa
+// GET  /deals/all        → todos os negócios (dashboard)
+// GET  /deal?id=         → negócio individual
+// GET  /person?id=       → dados de um contato
+// GET  /users            → lista de usuários da conta
+// POST /tasks            → cria tarefa vinculada a um negócio
+// POST /deal-ranking     → atualiza o ranking (estrelas) de um negócio
 
 const ORIGENS_PERMITIDAS = [
   'https://tw-visit.pages.dev',
   'https://fernandosilvatw-cmd.github.io',
-  'null', // file:// (desenvolvimento local)
+  'null',
 ];
 
 export default {
   async fetch(request, env) {
     const origem = request.headers.get('Origin') || 'null';
     const cors = {
-      'Access-Control-Allow-Origin': ORIGENS_PERMITIDAS.includes(origem) ? origem : ORIGENS_PERMITIDAS[0],
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Origin':  ORIGENS_PERMITIDAS.includes(origem) ? origem : ORIGENS_PERMITIDAS[0],
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     };
 
@@ -29,14 +33,64 @@ export default {
 
     const url  = new URL(request.url);
     const path = url.pathname;
+    const hdrs = { 'Authorization': `Token ${env.AGENDOR_TOKEN}`, 'Content-Type': 'application/json' };
 
-    // ── Rota: TODOS os negócios da conta (para Dashboard) ────────
-    if (path === '/deals/all') {
-      const page    = url.searchParams.get('page')     || '1';
-      const perPage = url.searchParams.get('per_page') || '100';
+    // ── POST: criar tarefa ─────────────────────────────────
+    if (request.method === 'POST' && path === '/tasks') {
+      try {
+        const body = await request.json();
+        const { dealId, text, type, dueDate, assignedUserId } = body;
+        if (!dealId || !text || !type || !dueDate || !assignedUserId) {
+          return resp({ erro: 'Campos obrigatórios: dealId, text, type, dueDate, assignedUserId' }, 400, cors);
+        }
+        const r = await fetch(
+          `https://api.agendor.com.br/v3/deals/${dealId}/tasks`,
+          { method: 'POST', headers: hdrs, body: JSON.stringify({ text, type, dueDate, assignedUsers: [assignedUserId] }) }
+        );
+        return resp(await r.json(), r.status, cors);
+      } catch (e) {
+        return resp({ erro: 'Falha ao criar tarefa: ' + e.message }, 502, cors);
+      }
+    }
+
+    // ── POST: atualizar ranking do negócio ─────────────────
+    if (request.method === 'POST' && path === '/deal-ranking') {
+      try {
+        const body = await request.json();
+        const { dealId, ranking } = body;
+        if (!dealId || ranking === undefined) {
+          return resp({ erro: 'Campos obrigatórios: dealId, ranking' }, 400, cors);
+        }
+        const r = await fetch(
+          `https://api.agendor.com.br/v3/deals/${dealId}`,
+          { method: 'PUT', headers: hdrs, body: JSON.stringify({ ranking }) }
+        );
+        return resp(await r.json(), r.status, cors);
+      } catch (e) {
+        return resp({ erro: 'Falha ao atualizar ranking: ' + e.message }, 502, cors);
+      }
+    }
+
+    // ── GET: lista de usuários da conta ────────────────────
+    if (path === '/users') {
       try {
         const r = await fetch(
-          `https://api.agendor.com.br/v3/deals?page=${page}&per_page=${perPage}`,
+          'https://api.agendor.com.br/v3/users?per_page=100',
+          { headers: { 'Authorization': `Token ${env.AGENDOR_TOKEN}` } }
+        );
+        return resp(await r.json(), r.status, cors);
+      } catch (e) {
+        return resp({ erro: 'Falha ao buscar usuários: ' + e.message }, 502, cors);
+      }
+    }
+
+    // ── GET: todos os negócios da conta (dashboard) ────────
+    if (path === '/deals/all') {
+      const page = url.searchParams.get('page') || '1';
+      const pp   = url.searchParams.get('per_page') || '100';
+      try {
+        const r = await fetch(
+          `https://api.agendor.com.br/v3/deals?page=${page}&per_page=${pp}`,
           { headers: { 'Authorization': `Token ${env.AGENDOR_TOKEN}` } }
         );
         return resp(await r.json(), r.status, cors);
@@ -45,11 +99,10 @@ export default {
       }
     }
 
-    // ── Rota: dados básicos de um negócio (com organization.people) ──
+    // ── GET: negócio individual ────────────────────────────
     if (path === '/deal') {
       const dealId = url.searchParams.get('id');
       if (!dealId) return resp({ erro: 'Parâmetro id é obrigatório.' }, 400, cors);
-
       try {
         const r = await fetch(
           `https://api.agendor.com.br/v3/deals/${dealId}`,
@@ -61,11 +114,10 @@ export default {
       }
     }
 
-    // ── Rota: dados de um contato ──────────────────────────
+    // ── GET: dados de um contato ───────────────────────────
     if (path === '/person') {
       const personId = url.searchParams.get('id');
       if (!personId) return resp({ erro: 'Parâmetro id é obrigatório.' }, 400, cors);
-
       try {
         const r = await fetch(
           `https://api.agendor.com.br/v3/people/${personId}`,
@@ -77,11 +129,10 @@ export default {
       }
     }
 
-    // ── Rota: negócios de uma empresa ─────────────────────
+    // ── GET: negócios de uma empresa ──────────────────────
     if (path === '/deals') {
       const orgId = url.searchParams.get('orgId');
       if (!orgId) return resp({ erro: 'Parâmetro orgId é obrigatório.' }, 400, cors);
-
       try {
         const r = await fetch(
           `https://api.agendor.com.br/v3/organizations/${orgId}/deals?per_page=100`,
@@ -93,13 +144,12 @@ export default {
       }
     }
 
-    // ── Rota padrão: lista de empresas ────────────────────
-    const page    = url.searchParams.get('page')     || '1';
-    const perPage = url.searchParams.get('per_page') || '100';
-
+    // ── GET: lista de empresas (padrão) ───────────────────
+    const page = url.searchParams.get('page') || '1';
+    const pp   = url.searchParams.get('per_page') || '100';
     try {
       const r = await fetch(
-        `https://api.agendor.com.br/v3/organizations?page=${page}&per_page=${perPage}`,
+        `https://api.agendor.com.br/v3/organizations?page=${page}&per_page=${pp}`,
         { headers: { 'Authorization': `Token ${env.AGENDOR_TOKEN}` } }
       );
       return resp(await r.json(), r.status, cors);
