@@ -19,7 +19,7 @@ export default {
     const origem = request.headers.get('Origin') || 'null';
     const cors = {
       'Access-Control-Allow-Origin':  ORIGENS_PERMITIDAS.includes(origem) ? origem : ORIGENS_PERMITIDAS[0],
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     };
 
@@ -144,6 +144,23 @@ export default {
         return resp(await r.json(), r.status, cors);
       } catch (e) {
         return resp({ erro: 'Falha ao buscar negócios: ' + e.message }, 502, cors);
+      }
+    }
+
+    // ── Proxy genérico CRM: /crm/* → Agendor v3/* ─────────
+    // Suporta GET, POST e PUT para qualquer entidade do Agendor
+    if (path.startsWith('/crm')) {
+      const agendorPath = path.replace('/crm', '');
+      const agendorUrl  = `https://api.agendor.com.br/v3${agendorPath}${url.search}`;
+      try {
+        const init = { method: request.method, headers: hdrs };
+        if (request.method === 'POST' || request.method === 'PUT') {
+          init.body = await request.text();
+        }
+        const r = await fetch(agendorUrl, init);
+        return resp(await r.json(), r.status, cors);
+      } catch (e) {
+        return resp({ erro: 'Falha no proxy CRM: ' + e.message }, 502, cors);
       }
     }
 
