@@ -40,12 +40,15 @@ export default {
       try {
         const body = await request.json();
         const { dealId, text, type, dueDate, assignedUserId } = body;
-        if (!dealId || !text || !type || !dueDate || !assignedUserId) {
-          return resp({ erro: 'Campos obrigatórios: dealId, text, type, dueDate, assignedUserId' }, 400, cors);
+        if (!dealId || !text || !dueDate || !assignedUserId) {
+          return resp({ erro: 'Campos obrigatórios: dealId, text, dueDate, assignedUserId' }, 400, cors);
         }
+        // Monta payload — omite "type" se vazio (Agendor cria como nota automática)
+        const payload = { text, dueDate, assignedUsers: [assignedUserId] };
+        if (type) payload.type = type;
         const r = await fetch(
           `https://api.agendor.com.br/v3/deals/${dealId}/tasks`,
-          { method: 'POST', headers: hdrs, body: JSON.stringify({ text, type, dueDate, assignedUsers: [assignedUserId] }) }
+          { method: 'POST', headers: hdrs, body: JSON.stringify(payload) }
         );
         return resp(await r.json(), r.status, cors);
       } catch (e) {

@@ -1868,8 +1868,7 @@ input[type="range"]::-webkit-slider-thumb {
                     <option value="EMAIL">📧 E-mail</option>
                     <option value="VISITA">🚗 Visita</option>
                     <option value="PROPOSTA">📄 Proposta</option>
-                    <option value="TAREFA">✅ Tarefa</option>
-                    <option value="NOTA">📝 Nota</option>
+                    <option value="NOTA">📝 Nota (sem tipo — criada automaticamente)</option>
                 </select>
             </div>
             <!-- Descrição -->
@@ -4108,10 +4107,9 @@ async function salvarTarefa() {
     const btn     = document.getElementById('tarefa-btn');
 
     erroEl.classList.remove('show');
-    if (!type)    { erroEl.textContent = 'Selecione o tipo de tarefa.';   erroEl.classList.add('show'); return; }
-    if (!text)    { erroEl.textContent = 'Preencha a descrição.';         erroEl.classList.add('show'); return; }
-    if (!dueDate) { erroEl.textContent = 'Informe a data limite.';        erroEl.classList.add('show'); return; }
-    if (!userId)  { erroEl.textContent = 'Selecione o responsável.';      erroEl.classList.add('show'); return; }
+    if (!text)    { erroEl.textContent = 'Preencha a descrição.';    erroEl.classList.add('show'); return; }
+    if (!dueDate) { erroEl.textContent = 'Informe a data limite.';   erroEl.classList.add('show'); return; }
+    if (!userId)  { erroEl.textContent = 'Selecione o responsável.'; erroEl.classList.add('show'); return; }
 
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...';
