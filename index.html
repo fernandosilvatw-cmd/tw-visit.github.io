@@ -4492,11 +4492,17 @@ async function carregarResumoTarefas() {
             await new Promise(r => setTimeout(r, 260));
         } while (true);
 
-        // 3. Mapa dealId → tarefas abertas
+        // 3. Inspeciona estrutura do primeiro task para depuração
+        const amostra = todasTarefas[0] || {};
+        const debugInfo = `Total tarefas: ${todasTarefas.length} | amostra deal: ${JSON.stringify(amostra.deal)} | dealId: ${amostra.dealId} | keys: ${Object.keys(amostra).join(',')}`;
+        document.getElementById('resumo-loading-txt').textContent = debugInfo;
+        await new Promise(r => setTimeout(r, 4000)); // pausa 4s para ler
+
+        // 3. Mapa dealId → tarefas abertas (tenta múltiplos campos)
         const hoje = new Date().toISOString().split('T')[0];
         const tasksByDeal = {};
         todasTarefas.filter(t => !t.completed).forEach(t => {
-            const dealId = t.deal?.id;
+            const dealId = String(t.deal?.id || t.dealId || t.deal_id || '');
             if (!dealId) return;
             if (!tasksByDeal[dealId]) tasksByDeal[dealId] = [];
             tasksByDeal[dealId].push(t);
@@ -4511,7 +4517,7 @@ async function carregarResumoTarefas() {
             if (!porUsuario[ownerId]) {
                 porUsuario[ownerId] = { nome: ownerNome, comTarefa: [], semTarefa: [], atrasada: [] };
             }
-            const tasks    = tasksByDeal[d.id] || [];
+            const tasks    = tasksByDeal[String(d.id)] || [];
             const temAtras = tasks.some(t => (t.dueDate||'').split('T')[0] < hoje && (t.dueDate||'').split('T')[0]);
             if (temAtras)              porUsuario[ownerId].atrasada.push(d.id);
             else if (tasks.length > 0) porUsuario[ownerId].comTarefa.push(d.id);
