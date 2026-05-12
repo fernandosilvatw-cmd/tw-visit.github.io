@@ -4492,11 +4492,16 @@ async function carregarResumoTarefas() {
             await new Promise(r => setTimeout(r, 260));
         } while (true);
 
-        // 3. Inspeciona estrutura do primeiro task para depuração
+        // 3. Debug: mostra JSON bruto do primeiro task na tela
         const amostra = todasTarefas[0] || {};
-        const debugInfo = `Total tarefas: ${todasTarefas.length} | amostra deal: ${JSON.stringify(amostra.deal)} | dealId: ${amostra.dealId} | keys: ${Object.keys(amostra).join(',')}`;
-        document.getElementById('resumo-loading-txt').textContent = debugInfo;
-        await new Promise(r => setTimeout(r, 4000)); // pausa 4s para ler
+        document.getElementById('resumo-loading').style.display = 'none';
+        document.getElementById('resumo-body').innerHTML = `
+            <div style="padding:16px;font-family:monospace;font-size:11px;background:#f8fafc;white-space:pre-wrap;word-break:break-all;border-bottom:1px solid #e2e8f0;">
+                <strong>Total tarefas carregadas: ${todasTarefas.length}</strong><br><br>
+                <strong>JSON do 1º task:</strong><br>${JSON.stringify(amostra, null, 2)}
+            </div>`;
+        document.getElementById('resumo-tabela').style.display = 'block';
+        return; // para aqui — não renderiza tabela ainda
 
         // 3. Mapa dealId → tarefas abertas (tenta múltiplos campos)
         const hoje = new Date().toISOString().split('T')[0];
