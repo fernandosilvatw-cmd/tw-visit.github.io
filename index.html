@@ -4242,7 +4242,7 @@ let calMes         = new Date(); // mês sendo exibido no calendário
 // ── Carregamento inicial da aba Tarefas ───────────────────
 async function carregarTarefas() {
     mostrarSubTabTarefas('negocios');
-    await Promise.all([carregarFunisEtapas(), carregarUsuariosFiltro()]);
+    await carregarFunisEtapas();
     await carregarDealsParaTarefas();
 }
 
@@ -4252,53 +4252,66 @@ async function carregarFunisEtapas() {
         const r  = await fetch(`${AGENDOR_PROXY}/funnels`);
         const d  = await r.json();
         tfFunis  = Array.isArray(d) ? d : (d.data || []);
-        // Popula select de etapas
-        const sel = document.getElementById('tf-etapa');
-        sel.innerHTML = '<option value="">Todas as etapas</option>';
-        tfFunis.forEach(f =>
-            (f.dealStages||[]).forEach(s =>
-                sel.innerHTML += `<option value="${s.id}">[${f.name}] ${s.name}</option>`
-            )
-        );
-        // Popula select de funil no modal de mover etapa
+        // Popula apenas o modal de mover etapa (filtro de etapas populado após carregar deals)
         const selF = document.getElementById('mover-funil-sel');
         selF.innerHTML = tfFunis.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
         atualizarEtapasSelect();
     } catch {}
 }
 
-async function carregarUsuariosFiltro() {
-    try {
-        const r = await fetch(`${AGENDOR_PROXY}/users`);
-        const d = await r.json();
-        const lista = Array.isArray(d) ? d : (d.data || []);
-        const opts  = lista.map(u => `<option value="${u.id}">${u.name||u.nome||''}</option>`).join('');
-        document.getElementById('tf-usuario').innerHTML    = '<option value="">Todos</option>' + opts;
-        document.getElementById('cal-filtro-user').innerHTML = '<option value="">Todos os usuários</option>' + opts;
-    } catch {}
+// Popula selects de responsável e etapa a partir dos deals carregados
+function popularFiltrosDasTarefas() {
+    // Responsável: owners únicos de todos os deals (ativos = têm negócios)
+    const ownersMap = new Map();
+    tfDeals.forEach(d => {
+        if (d.owner?.id) ownersMap.set(String(d.owner.id), d.owner.name || d.owner.nome || '');
+    });
+    const usuariosOpts = [...ownersMap.entries()]
+        .sort((a, b) => a[1].localeCompare(b[1]))
+        .map(([id, nome]) => `<option value="${id}">${nome}</option>`)
+        .join('');
+    document.getElementById('tf-usuario').innerHTML = '<option value="">Todos</option>' + usuariosOpts;
+    document.getElementById('cal-filtro-user').innerHTML = '<option value="">Todos os usuários</option>' + usuariosOpts;
+
+    // Etapa: apenas stages usadas por deals Brasil (exclui etapas do Chile)
+    const stageToFunnel = {};
+    tfFunis.forEach(f => (f.dealStages||[]).forEach(s => stageToFunnel[s.id] = f.name));
+    const stagesMap = new Map();
+    tfDeals.filter(d => !isChile(d)).forEach(d => {
+        if (d.dealStage?.id) stagesMap.set(String(d.dealStage.id), d.dealStage.name || '');
+    });
+    const etapasOpts = [...stagesMap.entries()]
+        .map(([id, name]) => {
+            const fn = stageToFunnel[id] ? `[${stageToFunnel[id]}] ` : '';
+            return `<option value="${id}">${fn}${name}</option>`;
+        })
+        .join('');
+    document.getElementById('tf-etapa').innerHTML = '<option value="">Todas as etapas</option>' + etapasOpts;
 }
 
-async function carregarDealsParaTarefas(pagina = 1) {
-    tfPagina = pagina;
+async function carregarDealsParaTarefas() {
     document.getElementById('tf-loading').style.display  = 'block';
     document.getElementById('tf-tabela').style.display   = 'none';
     document.getElementById('tf-empty').style.display    = 'none';
-    document.getElementById('tf-loading-txt').textContent = `Carregando negócios... (página ${pagina})`;
 
     try {
-        if (pagina === 1) tfDeals = [];
-        let total = 0;
-        // Busca até 3 páginas para ter dados suficientes no filtro
-        for (let p = pagina; p <= pagina + 2; p++) {
-            const r = await fetch(`${AGENDOR_PROXY}/deals/all?page=${p}&per_page=100`);
+        tfDeals = [];
+        let pagina = 1, total = 0;
+        do {
+            document.getElementById('tf-loading-txt').textContent =
+                `Carregando negócios... ${tfDeals.length}${total ? ' / ' + total : ''}`;
+            const r = await fetch(`${AGENDOR_PROXY}/deals/all?page=${pagina}&per_page=100`);
             const d = await r.json();
             const lista = Array.isArray(d) ? d : (d.data || []);
-            if (p === pagina) total = d.meta?.totalCount || lista.length;
+            if (pagina === 1) total = d.meta?.totalCount || lista.length;
             if (lista.length === 0) break;
             tfDeals.push(...lista);
+            pagina++;
             if (tfDeals.length >= total) break;
             await new Promise(r => setTimeout(r, 260));
-        }
+        } while (true);
+
+        popularFiltrosDasTarefas();
         document.getElementById('tf-loading').style.display = 'none';
         aplicarFiltrosTarefas();
     } catch (e) {
