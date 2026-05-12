@@ -1082,6 +1082,10 @@ input[type="range"]::-webkit-slider-thumb {
                 style="padding:8px 20px;border:none;border-radius:8px;cursor:pointer;font-family:Inter,sans-serif;font-size:13px;font-weight:600;background:#2563eb;color:white;transition:all 0.15s;">
                 <i class="fas fa-handshake"></i> Negócios
             </button>
+            <button id="tab-resumo-btn" onclick="mostrarSubTabTarefas('resumo')"
+                style="padding:8px 20px;border:none;border-radius:8px;cursor:pointer;font-family:Inter,sans-serif;font-size:13px;font-weight:600;background:none;color:#64748b;transition:all 0.15s;">
+                <i class="fas fa-chart-bar"></i> Resumo
+            </button>
             <button id="tab-calendario-btn" onclick="mostrarSubTabTarefas('calendario')"
                 style="padding:8px 20px;border:none;border-radius:8px;cursor:pointer;font-family:Inter,sans-serif;font-size:13px;font-weight:600;background:none;color:#64748b;transition:all 0.15s;">
                 <i class="fas fa-calendar-alt"></i> Calendário
@@ -1143,6 +1147,27 @@ input[type="range"]::-webkit-slider-thumb {
             <div id="tf-empty" style="display:none;text-align:center;padding:48px;color:#94a3b8;">
                 <i class="fas fa-inbox" style="font-size:36px;margin-bottom:12px;display:block;opacity:0.4;"></i>
                 <p>Nenhum negócio encontrado.</p>
+            </div>
+        </div>
+
+        <!-- SUB-ABA: RESUMO POR USUÁRIO -->
+        <div id="subtab-resumo" style="display:none;">
+            <div id="resumo-loading" style="display:none;text-align:center;padding:40px;color:#64748b;">
+                <i class="fas fa-spinner fa-spin" style="font-size:24px;color:#2563eb;margin-bottom:10px;display:block;"></i>
+                <div id="resumo-loading-txt">Carregando tarefas...</div>
+            </div>
+            <div class="form-section" id="resumo-tabela" style="display:none;overflow:hidden;">
+                <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;background:#f8fafc;padding:12px 20px;border-bottom:1.5px solid #e2e8f0;">
+                    <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Responsável</span>
+                    <span style="font-size:10px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:0.5px;text-align:center;">Com Tarefa</span>
+                    <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;text-align:center;">Sem Tarefa</span>
+                    <span style="font-size:10px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:0.5px;text-align:center;">⚠ Atrasada</span>
+                </div>
+                <div id="resumo-body"></div>
+            </div>
+            <div id="resumo-empty" style="display:none;text-align:center;padding:48px;color:#94a3b8;">
+                <i class="fas fa-inbox" style="font-size:36px;margin-bottom:12px;display:block;opacity:0.4;"></i>
+                <p>Nenhum dado disponível.</p>
             </div>
         </div>
 
@@ -4434,17 +4459,136 @@ function renderizarTabelaTarefas(pagina = 1) {
 function tfPrevPage() {}
 function tfNextPage() {}
 
+// ── Dashboard Resumo por Usuário ──────────────────────────
+let tfResumoCarregado = false;
+let tfResumoData      = null; // { [ownerId]: {nome, comTarefa:[], semTarefa:[], atrasada:[]} }
+
+async function carregarResumoTarefas() {
+    if (tfResumoData) { renderizarResumoTarefas(); return; }
+
+    document.getElementById('resumo-loading').style.display = 'block';
+    document.getElementById('resumo-tabela').style.display  = 'none';
+    document.getElementById('resumo-empty').style.display   = 'none';
+
+    try {
+        // 1. Garante que os deals estão carregados
+        if (!tfDeals.length) await carregarDealsParaTarefas();
+
+        // 2. Busca todas as tarefas abertas (sem filtro de data)
+        const todasTarefas = [];
+        let pag = 1, total = 0;
+        do {
+            document.getElementById('resumo-loading-txt').textContent =
+                `Carregando tarefas... ${todasTarefas.length}${total ? ' / ' + total : ''}`;
+            const r = await fetch(`${AGENDOR_PROXY}/all-tasks?per_page=100&page=${pag}`);
+            const d = await r.json();
+            const lista = Array.isArray(d) ? d : (d.data || []);
+            if (pag === 1) total = d.meta?.totalCount || lista.length;
+            if (!lista.length) break;
+            todasTarefas.push(...lista);
+            pag++;
+            if (todasTarefas.length >= total) break;
+            await new Promise(r => setTimeout(r, 260));
+        } while (true);
+
+        // 3. Mapa dealId → tarefas abertas
+        const hoje = new Date().toISOString().split('T')[0];
+        const tasksByDeal = {};
+        todasTarefas.filter(t => !t.completed).forEach(t => {
+            const dealId = t.deal?.id;
+            if (!dealId) return;
+            if (!tasksByDeal[dealId]) tasksByDeal[dealId] = [];
+            tasksByDeal[dealId].push(t);
+        });
+
+        // 4. Agrupa deals por responsável
+        const porUsuario = {};
+        tfDeals.forEach(d => {
+            const ownerId   = String(d.owner?.id || '');
+            const ownerNome = d.owner?.name || d.owner?.nome || 'Sem responsável';
+            if (!ownerId) return;
+            if (!porUsuario[ownerId]) {
+                porUsuario[ownerId] = { nome: ownerNome, comTarefa: [], semTarefa: [], atrasada: [] };
+            }
+            const tasks     = tasksByDeal[d.id] || [];
+            const temAtras  = tasks.some(t => t.dueDate && t.dueDate < hoje);
+            if (tasks.length > 0) porUsuario[ownerId].comTarefa.push(d.id);
+            else                  porUsuario[ownerId].semTarefa.push(d.id);
+            if (temAtras)         porUsuario[ownerId].atrasada.push(d.id);
+        });
+
+        tfResumoData = porUsuario;
+        document.getElementById('resumo-loading').style.display = 'none';
+        renderizarResumoTarefas();
+    } catch (e) {
+        document.getElementById('resumo-loading').style.display = 'none';
+        document.getElementById('resumo-empty').style.display   = 'block';
+        document.getElementById('resumo-empty').innerHTML =
+            `<i class="fas fa-exclamation-triangle" style="color:#dc2626;font-size:28px;margin-bottom:10px;display:block;"></i><p>${e.message}</p>`;
+    }
+}
+
+function renderizarResumoTarefas() {
+    if (!tfResumoData) return;
+    const rows = Object.entries(tfResumoData)
+        .sort((a, b) => a[1].nome.localeCompare(b[1].nome));
+
+    let totalCom = 0, totalSem = 0, totalAtr = 0;
+    const linhas = rows.map(([ownerId, u]) => {
+        totalCom += u.comTarefa.length;
+        totalSem += u.semTarefa.length;
+        totalAtr += u.atrasada.length;
+        const clkCom = `irParaFiltroResumo('${ownerId}','com')`;
+        const clkSem = `irParaFiltroResumo('${ownerId}','sem')`;
+        const clkAtr = `irParaFiltroResumo('${ownerId}','atrasada')`;
+        const badgeCom = u.comTarefa.length
+            ? `<span onclick="${clkCom}" style="cursor:pointer;background:#dbeafe;color:#1d4ed8;border-radius:20px;padding:4px 16px;font-weight:700;font-size:14px;">${u.comTarefa.length}</span>` : `<span style="color:#cbd5e1;font-size:13px;">—</span>`;
+        const badgeSem = u.semTarefa.length
+            ? `<span onclick="${clkSem}" style="cursor:pointer;background:#f1f5f9;color:#475569;border-radius:20px;padding:4px 16px;font-weight:700;font-size:14px;">${u.semTarefa.length}</span>` : `<span style="color:#cbd5e1;font-size:13px;">—</span>`;
+        const badgeAtr = u.atrasada.length
+            ? `<span onclick="${clkAtr}" style="cursor:pointer;background:#fee2e2;color:#dc2626;border-radius:20px;padding:4px 16px;font-weight:700;font-size:14px;">⚠ ${u.atrasada.length}</span>` : `<span style="color:#cbd5e1;font-size:13px;">—</span>`;
+        return `<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:12px 20px;border-bottom:1px solid #f1f5f9;align-items:center;">
+            <span style="font-size:13px;font-weight:600;color:#0f172a;">${u.nome}</span>
+            <div style="text-align:center;">${badgeCom}</div>
+            <div style="text-align:center;">${badgeSem}</div>
+            <div style="text-align:center;">${badgeAtr}</div>
+        </div>`;
+    }).join('');
+
+    const rodape = `<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:12px 20px;background:#f8fafc;border-top:2px solid #e2e8f0;align-items:center;">
+        <span style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;">TOTAL</span>
+        <div style="text-align:center;font-size:15px;font-weight:800;color:#1d4ed8;">${totalCom}</div>
+        <div style="text-align:center;font-size:15px;font-weight:800;color:#475569;">${totalSem}</div>
+        <div style="text-align:center;font-size:15px;font-weight:800;color:#dc2626;">${totalAtr}</div>
+    </div>`;
+
+    document.getElementById('resumo-body').innerHTML = linhas + rodape;
+    document.getElementById('resumo-tabela').style.display = 'block';
+}
+
+function irParaFiltroResumo(ownerId, status) {
+    mostrarSubTabTarefas('negocios');
+    const selUser = document.getElementById('tf-usuario');
+    if (selUser) selUser.value = ownerId;
+    setFiltroStatus(status);
+}
+
 // ── Sub-abas ──────────────────────────────────────────────
 function mostrarSubTabTarefas(tab) {
     document.getElementById('subtab-negocios').style.display   = tab === 'negocios'   ? 'block' : 'none';
+    document.getElementById('subtab-resumo').style.display     = tab === 'resumo'     ? 'block' : 'none';
     document.getElementById('subtab-calendario').style.display = tab === 'calendario' ? 'block' : 'none';
     const btnN = document.getElementById('tab-negocios-btn');
+    const btnR = document.getElementById('tab-resumo-btn');
     const btnC = document.getElementById('tab-calendario-btn');
     btnN.style.background = tab === 'negocios'   ? '#2563eb' : 'none';
     btnN.style.color      = tab === 'negocios'   ? 'white'   : '#64748b';
+    btnR.style.background = tab === 'resumo'     ? '#2563eb' : 'none';
+    btnR.style.color      = tab === 'resumo'     ? 'white'   : '#64748b';
     btnC.style.background = tab === 'calendario' ? '#2563eb' : 'none';
     btnC.style.color      = tab === 'calendario' ? 'white'   : '#64748b';
     if (tab === 'calendario') carregarTarefasCalendario();
+    if (tab === 'resumo')     carregarResumoTarefas();
 }
 
 // ── Modal: Tarefas do Negócio ─────────────────────────────
