@@ -1152,6 +1152,7 @@ input[type="range"]::-webkit-slider-thumb {
 
         <!-- SUB-ABA: RESUMO POR USUÁRIO -->
         <div id="subtab-resumo" style="display:none;">
+            <p style="font-size:12px;color:#94a3b8;margin:0 0 12px;">Considera apenas negócios <strong>em andamento</strong>. Buscando tarefas por negócio via API.</p>
             <div id="resumo-loading" style="display:none;text-align:center;padding:40px;color:#64748b;">
                 <i class="fas fa-spinner fa-spin" style="font-size:24px;color:#2563eb;margin-bottom:10px;display:block;"></i>
                 <div id="resumo-loading-txt">Carregando tarefas...</div>
@@ -4461,8 +4462,7 @@ function tfPrevPage() {}
 function tfNextPage() {}
 
 // ── Dashboard Resumo por Usuário ──────────────────────────
-let tfResumoCarregado = false;
-let tfResumoData      = null; // { [ownerId]: {nome, comTarefa:[], semTarefa:[], atrasada:[]} }
+let tfResumoData = null; // { [ownerId]: {nome, comTarefa:[], semTarefa:[], atrasada:[]} }
 
 async function carregarResumoTarefas() {
     if (tfResumoData) { renderizarResumoTarefas(); return; }
@@ -4472,62 +4472,47 @@ async function carregarResumoTarefas() {
     document.getElementById('resumo-empty').style.display   = 'none';
 
     try {
-        // 1. Garante que os deals estão carregados
         if (!tfDeals.length) await carregarDealsParaTarefas();
 
-        // 2. Busca todas as tarefas abertas (sem filtro de data)
-        const todasTarefas = [];
-        let pag = 1, total = 0;
-        do {
-            document.getElementById('resumo-loading-txt').textContent =
-                `Carregando tarefas... ${todasTarefas.length}${total ? ' / ' + total : ''}`;
-            const r = await fetch(`${AGENDOR_PROXY}/all-tasks?per_page=100&page=${pag}`);
-            const d = await r.json();
-            const lista = Array.isArray(d) ? d : (d.data || []);
-            if (pag === 1) total = d.meta?.totalCount || lista.length;
-            if (!lista.length) break;
-            todasTarefas.push(...lista);
-            pag++;
-            if (todasTarefas.length >= total) break;
-            await new Promise(r => setTimeout(r, 260));
-        } while (true);
-
-        // 3. Debug: mostra JSON bruto do primeiro task na tela
-        const amostra = todasTarefas[0] || {};
-        document.getElementById('resumo-loading').style.display = 'none';
-        document.getElementById('resumo-body').innerHTML = `
-            <div style="padding:16px;font-family:monospace;font-size:11px;background:#f8fafc;white-space:pre-wrap;word-break:break-all;border-bottom:1px solid #e2e8f0;">
-                <strong>Total tarefas carregadas: ${todasTarefas.length}</strong><br><br>
-                <strong>JSON do 1º task:</strong><br>${JSON.stringify(amostra, null, 2)}
-            </div>`;
-        document.getElementById('resumo-tabela').style.display = 'block';
-        return; // para aqui — não renderiza tabela ainda
-
-        // 3. Mapa dealId → tarefas abertas (tenta múltiplos campos)
-        const hoje = new Date().toISOString().split('T')[0];
-        const tasksByDeal = {};
-        todasTarefas.filter(t => !t.completed).forEach(t => {
-            const dealId = String(t.deal?.id || t.dealId || t.deal_id || '');
-            if (!dealId) return;
-            if (!tasksByDeal[dealId]) tasksByDeal[dealId] = [];
-            tasksByDeal[dealId].push(t);
-        });
-
-        // 4. Agrupa deals por responsável
+        // Apenas negócios em andamento (dealStatus.id === 1)
+        const ativos = tfDeals.filter(d => d.dealStatus?.id === 1);
+        const hoje   = new Date().toISOString().split('T')[0];
         const porUsuario = {};
-        tfDeals.forEach(d => {
-            const ownerId   = String(d.owner?.id || '');
-            const ownerNome = d.owner?.name || d.owner?.nome || 'Sem responsável';
+
+        // Inicializa todos os owners com arrays vazios
+        ativos.forEach(d => {
+            const ownerId = String(d.owner?.id || '');
             if (!ownerId) return;
             if (!porUsuario[ownerId]) {
-                porUsuario[ownerId] = { nome: ownerNome, comTarefa: [], semTarefa: [], atrasada: [] };
+                porUsuario[ownerId] = { nome: d.owner?.name || d.owner?.nome || '', comTarefa: [], semTarefa: [], atrasada: [] };
             }
-            const tasks    = tasksByDeal[String(d.id)] || [];
-            const temAtras = tasks.some(t => (t.dueDate||'').split('T')[0] < hoje && (t.dueDate||'').split('T')[0]);
-            if (temAtras)              porUsuario[ownerId].atrasada.push(d.id);
-            else if (tasks.length > 0) porUsuario[ownerId].comTarefa.push(d.id);
-            else                       porUsuario[ownerId].semTarefa.push(d.id);
         });
+
+        // Busca tarefas por negócio em lotes de 6 paralelos
+        const BATCH = 6;
+        for (let i = 0; i < ativos.length; i += BATCH) {
+            document.getElementById('resumo-loading-txt').textContent =
+                `Verificando tarefas... ${Math.min(i + BATCH, ativos.length)} / ${ativos.length} negócios em andamento`;
+
+            await Promise.all(ativos.slice(i, i + BATCH).map(async d => {
+                const ownerId = String(d.owner?.id || '');
+                if (!ownerId) return;
+                try {
+                    const r  = await fetch(`${AGENDOR_PROXY}/deal-tasks?dealId=${d.id}`);
+                    const dd = await r.json();
+                    const tasks  = Array.isArray(dd) ? dd : (dd.data || []);
+                    const abertas = tasks.filter(t => !t.completed);
+                    const atras   = abertas.filter(t => t.dueDate && (t.dueDate||'').split('T')[0] < hoje);
+                    if (atras.length > 0)        porUsuario[ownerId].atrasada.push(d.id);
+                    else if (abertas.length > 0) porUsuario[ownerId].comTarefa.push(d.id);
+                    else                         porUsuario[ownerId].semTarefa.push(d.id);
+                } catch {
+                    porUsuario[ownerId].semTarefa.push(d.id);
+                }
+            }));
+
+            if (i + BATCH < ativos.length) await new Promise(r => setTimeout(r, 300));
+        }
 
         tfResumoData = porUsuario;
         document.getElementById('resumo-loading').style.display = 'none';

@@ -108,7 +108,7 @@ export default {
       if (!dealId) return resp({ erro: 'dealId obrigatório.' }, 400, cors);
       try {
         const r = await fetch(
-          `https://api.agendor.com.br/v3/deals/${dealId}/tasks?per_page=50`,
+          `https://api.agendor.com.br/v3/deals/${dealId}/tasks?per_page=100`,
           { headers: { 'Authorization': `Token ${env.AGENDOR_TOKEN}` } }
         );
         return resp(await r.json(), r.status, cors);
