@@ -884,6 +884,9 @@ input[type="range"]::-webkit-slider-thumb {
         <button class="nav-item" onclick="navegarDashboard('brasil', this)">
             <i class="fas fa-chart-pie"></i><span>Dashboard</span>
         </button>
+        <button class="nav-item" onclick="navegar('tarefas', this)">
+            <i class="fas fa-calendar-check"></i><span>Tarefas</span>
+        </button>
         <button class="nav-item" onclick="navegar('nova-visita', this)">
             <i class="fas fa-clipboard-list"></i><span>Nova Visita</span>
         </button>
@@ -1062,6 +1065,118 @@ input[type="range"]::-webkit-slider-thumb {
             </div>
         </div>
 
+    </div>
+
+    <!-- ======================================================
+         PÁGINA: TAREFAS
+         ====================================================== -->
+    <div class="page-section" id="page-tarefas">
+        <div class="page-header">
+            <h1><i class="fas fa-calendar-check" style="color:#2563eb;margin-right:8px;"></i>Tarefas & Negócios</h1>
+            <p>Gestão de atividades e pipeline por negócio</p>
+        </div>
+
+        <!-- Sub-abas -->
+        <div style="display:flex;gap:0;background:white;border-radius:10px;padding:4px;box-shadow:0 1px 3px rgba(0,0,0,0.07);margin-bottom:16px;width:fit-content;">
+            <button id="tab-negocios-btn" onclick="mostrarSubTabTarefas('negocios')"
+                style="padding:8px 20px;border:none;border-radius:8px;cursor:pointer;font-family:Inter,sans-serif;font-size:13px;font-weight:600;background:#2563eb;color:white;transition:all 0.15s;">
+                <i class="fas fa-handshake"></i> Negócios
+            </button>
+            <button id="tab-calendario-btn" onclick="mostrarSubTabTarefas('calendario')"
+                style="padding:8px 20px;border:none;border-radius:8px;cursor:pointer;font-family:Inter,sans-serif;font-size:13px;font-weight:600;background:none;color:#64748b;transition:all 0.15s;">
+                <i class="fas fa-calendar-alt"></i> Calendário
+            </button>
+        </div>
+
+        <!-- SUB-ABA: NEGÓCIOS -->
+        <div id="subtab-negocios">
+            <!-- Filtros -->
+            <div class="dash-filters" style="flex-wrap:wrap;gap:10px;">
+                <div class="fg" style="flex:0 0 180px;">
+                    <label style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.4px;">Responsável</label>
+                    <select id="tf-usuario" onchange="aplicarFiltrosTarefas()" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-family:Inter,sans-serif;font-size:12px;outline:none;">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="fg" style="flex:0 0 180px;">
+                    <label style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.4px;">Etapa do Funil</label>
+                    <select id="tf-etapa" onchange="aplicarFiltrosTarefas()" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-family:Inter,sans-serif;font-size:12px;outline:none;">
+                        <option value="">Todas as etapas</option>
+                    </select>
+                </div>
+                <div class="fg" style="flex:1 1 240px;">
+                    <label style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.4px;">Status das Tarefas</label>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <button class="btn btn-primary btn-sm tf-status-btn" data-status="todos" onclick="setFiltroStatus('todos')">Todos</button>
+                        <button class="btn btn-secondary btn-sm tf-status-btn" data-status="sem" onclick="setFiltroStatus('sem')">Sem Tarefa</button>
+                        <button class="btn btn-secondary btn-sm tf-status-btn" data-status="com" onclick="setFiltroStatus('com')">Com Tarefa</button>
+                        <button class="btn btn-secondary btn-sm tf-status-btn" data-status="atrasada" onclick="setFiltroStatus('atrasada')" style="color:#dc2626;">⚠ Atrasada</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div id="tf-loading" style="display:none;text-align:center;padding:40px;color:#64748b;">
+                <i class="fas fa-spinner fa-spin" style="font-size:24px;color:#2563eb;margin-bottom:10px;display:block;"></i>
+                <div id="tf-loading-txt">Carregando negócios...</div>
+            </div>
+
+            <!-- Tabela de negócios -->
+            <div class="form-section" id="tf-tabela" style="display:none;overflow:hidden;">
+                <div style="display:grid;grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 130px;background:#f8fafc;padding:10px 16px;border-bottom:1px solid #f1f5f9;">
+                    <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Negócio</span>
+                    <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Empresa</span>
+                    <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Etapa</span>
+                    <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Responsável</span>
+                    <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Tarefas</span>
+                    <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Ações</span>
+                </div>
+                <div id="tf-tabela-body" style="max-height:520px;overflow-y:auto;"></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#fafafa;border-top:1px solid #f1f5f9;">
+                    <span id="tf-pager-info" style="font-size:12px;color:#94a3b8;"></span>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-secondary btn-sm" id="tf-btn-prev" onclick="tfPrevPage()" disabled><i class="fas fa-chevron-left"></i></button>
+                        <button class="btn btn-secondary btn-sm" id="tf-btn-next" onclick="tfNextPage()" disabled><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div id="tf-empty" style="display:none;text-align:center;padding:48px;color:#94a3b8;">
+                <i class="fas fa-inbox" style="font-size:36px;margin-bottom:12px;display:block;opacity:0.4;"></i>
+                <p>Nenhum negócio encontrado.</p>
+            </div>
+        </div>
+
+        <!-- SUB-ABA: CALENDÁRIO -->
+        <div id="subtab-calendario" style="display:none;">
+            <!-- Filtro + navegação -->
+            <div style="display:flex;align-items:center;gap:12px;background:white;border-radius:10px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.07);margin-bottom:14px;flex-wrap:wrap;">
+                <button class="btn btn-secondary btn-sm" onclick="calNavMes(-1)"><i class="fas fa-chevron-left"></i></button>
+                <span id="cal-titulo" style="font-size:15px;font-weight:700;color:#0f172a;min-width:160px;text-align:center;">—</span>
+                <button class="btn btn-secondary btn-sm" onclick="calNavMes(1)"><i class="fas fa-chevron-right"></i></button>
+                <select id="cal-filtro-user" onchange="renderizarCalendario()" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 12px;font-family:Inter,sans-serif;font-size:13px;outline:none;margin-left:auto;">
+                    <option value="">Todos os usuários</option>
+                </select>
+                <button class="btn btn-secondary btn-sm" onclick="carregarTarefasCalendario()">
+                    <i class="fas fa-sync-alt"></i> Atualizar
+                </button>
+            </div>
+            <!-- Grid do calendário -->
+            <div class="form-section" style="overflow:hidden;">
+                <div style="display:grid;grid-template-columns:repeat(7,1fr);background:#f8fafc;border-bottom:1px solid #f1f5f9;">
+                    <div style="padding:10px;text-align:center;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Dom</div>
+                    <div style="padding:10px;text-align:center;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Seg</div>
+                    <div style="padding:10px;text-align:center;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Ter</div>
+                    <div style="padding:10px;text-align:center;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Qua</div>
+                    <div style="padding:10px;text-align:center;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Qui</div>
+                    <div style="padding:10px;text-align:center;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Sex</div>
+                    <div style="padding:10px;text-align:center;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;">Sáb</div>
+                </div>
+                <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);"></div>
+                <div id="cal-loading" style="display:none;text-align:center;padding:30px;color:#94a3b8;">
+                    <i class="fas fa-spinner fa-spin" style="font-size:20px;color:#2563eb;"></i>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ======================================================
@@ -1899,6 +2014,67 @@ input[type="range"]::-webkit-slider-thumb {
     </div>
 </div>
 
+<!-- ============================================================
+     MODAL — TAREFAS DO NEGÓCIO
+     ============================================================ -->
+<div class="modal-overlay" id="modal-deal-tasks" onclick="if(event.target===this)fecharDealTasks()">
+    <div class="modal-box" style="max-width:700px;">
+        <div class="modal-head">
+            <h2 id="deal-tasks-titulo"><i class="fas fa-tasks" style="color:#2563eb;margin-right:8px;"></i>Tarefas</h2>
+            <button class="btn-close" onclick="fecharDealTasks()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="padding:18px 24px;">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                <button class="btn btn-primary btn-sm" id="deal-tasks-criar-btn" onclick="">
+                    <i class="fas fa-plus"></i> Nova Tarefa
+                </button>
+            </div>
+            <div id="deal-tasks-lista" style="max-height:420px;overflow-y:auto;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     MODAL — MOVER ETAPA DO FUNIL
+     ============================================================ -->
+<div class="modal-overlay" id="modal-mover-etapa" onclick="if(event.target===this)fecharMoverEtapa()">
+    <div class="modal-box" style="max-width:440px;">
+        <div class="modal-head">
+            <h2><i class="fas fa-exchange-alt" style="color:#2563eb;margin-right:8px;"></i>Mover Etapa do Funil</h2>
+            <button class="btn-close" onclick="fecharMoverEtapa()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="padding:22px 24px;">
+            <p id="mover-etapa-deal" style="font-size:13px;color:#64748b;margin-bottom:16px;"></p>
+            <div class="fg" style="margin-bottom:20px;">
+                <label>Funil</label>
+                <select id="mover-funil-sel" onchange="atualizarEtapasSelect()" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-family:Inter,sans-serif;font-size:13px;outline:none;"></select>
+            </div>
+            <div class="fg" style="margin-bottom:20px;">
+                <label>Nova Etapa</label>
+                <select id="mover-etapa-sel" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:9px 12px;font-family:Inter,sans-serif;font-size:13px;outline:none;"></select>
+            </div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="confirmarMoverEtapa()">
+                <i class="fas fa-check"></i> Confirmar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     MODAL — ATIVIDADES DO DIA (Calendário)
+     ============================================================ -->
+<div class="modal-overlay" id="modal-cal-dia" onclick="if(event.target===this)fecharCalDia()">
+    <div class="modal-box" style="max-width:600px;">
+        <div class="modal-head">
+            <h2 id="cal-dia-titulo"><i class="fas fa-calendar-day" style="color:#2563eb;margin-right:8px;"></i>—</h2>
+            <button class="btn-close" onclick="fecharCalDia()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="padding:18px 24px;">
+            <div id="cal-dia-lista" style="max-height:440px;overflow-y:auto;"></div>
+        </div>
+    </div>
+</div>
+
 <!-- Toast de notificação -->
 <div class="toast" id="toast">
     <i class="fas fa-check-circle" id="toast-ico"></i>
@@ -1991,6 +2167,7 @@ function navegar(pagina, elClicado) {
 
     // Ações específicas por página
     if (pagina === 'dashboard')  carregarDashboard();
+    if (pagina === 'tarefas')    carregarTarefas();
     if (pagina === 'historico')  renderHistorico();
     if (pagina === 'configuracoes') {
         document.getElementById('cfg-nome').value = lerConfig().nome || '';
@@ -2004,11 +2181,11 @@ function navegar(pagina, elClicado) {
 // Atalhos usados pelos botões do dashboard
 function navParaNova() {
     const btns = document.querySelectorAll('.nav-item');
-    navegar('nova-visita', btns[2]);
+    navegar('nova-visita', btns[3]);
 }
 function navParaHistorico() {
     const btns = document.querySelectorAll('.nav-item');
-    navegar('historico', btns[3]);
+    navegar('historico', btns[4]);
 }
 
 // =========================================================
@@ -2310,7 +2487,7 @@ function editarVisita(id) {
     // Navega para o formulário
     document.getElementById('form-titulo').textContent = 'Editar Visita — ' + v.empresa;
     const btns = document.querySelectorAll('.nav-item');
-    navegar('nova-visita', btns[2]);
+    navegar('nova-visita', btns[3]);
     toast('Visita carregada para edição.', 'ok');
 }
 
@@ -4047,6 +4224,465 @@ function fecharRankingDrillFora(e) {
 }
 
 // =========================================================
+// MÓDULO TAREFAS
+// =========================================================
+
+let tfDeals        = [];   // todos os deals carregados
+let tfDealsVisiveis = [];  // deals após filtros
+let tfPagina       = 1;
+const TF_PER_PAGE  = 50;
+let tfFiltroStatus = 'todos';
+let tfFunis        = [];   // cache de funis com etapas
+let tfTasksCache   = {};   // {dealId: [tasks]} cache
+let tfDealAtual    = null; // deal aberto no modal de tarefas
+let tfMoverDealId  = null; // deal sendo movido de etapa
+let calTarefas     = {};   // {YYYY-MM-DD: [tasks]}
+let calMes         = new Date(); // mês sendo exibido no calendário
+
+// ── Carregamento inicial da aba Tarefas ───────────────────
+async function carregarTarefas() {
+    mostrarSubTabTarefas('negocios');
+    await Promise.all([carregarFunisEtapas(), carregarUsuariosFiltro()]);
+    await carregarDealsParaTarefas();
+}
+
+async function carregarFunisEtapas() {
+    if (tfFunis.length) return;
+    try {
+        const r  = await fetch(`${AGENDOR_PROXY}/funnels`);
+        const d  = await r.json();
+        tfFunis  = Array.isArray(d) ? d : (d.data || []);
+        // Popula select de etapas
+        const sel = document.getElementById('tf-etapa');
+        sel.innerHTML = '<option value="">Todas as etapas</option>';
+        tfFunis.forEach(f =>
+            (f.dealStages||[]).forEach(s =>
+                sel.innerHTML += `<option value="${s.id}">[${f.name}] ${s.name}</option>`
+            )
+        );
+        // Popula select de funil no modal de mover etapa
+        const selF = document.getElementById('mover-funil-sel');
+        selF.innerHTML = tfFunis.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+        atualizarEtapasSelect();
+    } catch {}
+}
+
+async function carregarUsuariosFiltro() {
+    try {
+        const r = await fetch(`${AGENDOR_PROXY}/users`);
+        const d = await r.json();
+        const lista = Array.isArray(d) ? d : (d.data || []);
+        const opts  = lista.map(u => `<option value="${u.id}">${u.name||u.nome||''}</option>`).join('');
+        document.getElementById('tf-usuario').innerHTML    = '<option value="">Todos</option>' + opts;
+        document.getElementById('cal-filtro-user').innerHTML = '<option value="">Todos os usuários</option>' + opts;
+    } catch {}
+}
+
+async function carregarDealsParaTarefas(pagina = 1) {
+    tfPagina = pagina;
+    document.getElementById('tf-loading').style.display  = 'block';
+    document.getElementById('tf-tabela').style.display   = 'none';
+    document.getElementById('tf-empty').style.display    = 'none';
+    document.getElementById('tf-loading-txt').textContent = `Carregando negócios... (página ${pagina})`;
+
+    try {
+        if (pagina === 1) tfDeals = [];
+        let total = 0;
+        // Busca até 3 páginas para ter dados suficientes no filtro
+        for (let p = pagina; p <= pagina + 2; p++) {
+            const r = await fetch(`${AGENDOR_PROXY}/deals/all?page=${p}&per_page=100`);
+            const d = await r.json();
+            const lista = Array.isArray(d) ? d : (d.data || []);
+            if (p === pagina) total = d.meta?.totalCount || lista.length;
+            if (lista.length === 0) break;
+            tfDeals.push(...lista);
+            if (tfDeals.length >= total) break;
+            await new Promise(r => setTimeout(r, 260));
+        }
+        document.getElementById('tf-loading').style.display = 'none';
+        aplicarFiltrosTarefas();
+    } catch (e) {
+        document.getElementById('tf-loading').style.display = 'none';
+        document.getElementById('tf-empty').style.display   = 'block';
+        document.getElementById('tf-empty').innerHTML =
+            `<i class="fas fa-exclamation-triangle" style="color:#dc2626;"></i><p>${e.message}</p>`;
+    }
+}
+
+// ── Filtros ───────────────────────────────────────────────
+function setFiltroStatus(status) {
+    tfFiltroStatus = status;
+    document.querySelectorAll('.tf-status-btn').forEach(b => {
+        const isActive = b.dataset.status === status;
+        b.className = isActive ? 'btn btn-primary btn-sm tf-status-btn' : 'btn btn-secondary btn-sm tf-status-btn';
+        if (b.dataset.status === 'atrasada' && !isActive) b.style.color = '#dc2626';
+        else if (b.dataset.status === 'atrasada' && isActive) b.style.color = '';
+    });
+    aplicarFiltrosTarefas();
+}
+
+async function aplicarFiltrosTarefas() {
+    const userId  = document.getElementById('tf-usuario').value;
+    const stageId = document.getElementById('tf-etapa').value;
+    const hoje    = new Date().toISOString().split('T')[0];
+
+    let filtrados = tfDeals.filter(d => {
+        if (userId  && String(d.owner?.id) !== userId)         return false;
+        if (stageId && String(d.dealStage?.id) !== stageId)   return false;
+        return true;
+    });
+
+    // Para filtros de tarefas, busca lazy (apenas se necessário)
+    if (tfFiltroStatus !== 'todos') {
+        // Busca tarefas dos deals que ainda não estão no cache
+        const semCache = filtrados.filter(d => tfTasksCache[d.id] === undefined);
+        if (semCache.length > 0) {
+            document.getElementById('tf-loading').style.display  = 'block';
+            document.getElementById('tf-tabela').style.display   = 'none';
+            document.getElementById('tf-loading-txt').textContent = `Verificando tarefas (${semCache.length} negócios)...`;
+            for (const d of semCache.slice(0, 30)) { // limita para não demorar
+                try {
+                    const r = await fetch(`${AGENDOR_PROXY}/deal-tasks?dealId=${d.id}`);
+                    const j = await r.json();
+                    tfTasksCache[d.id] = Array.isArray(j) ? j : (j.data || []);
+                } catch { tfTasksCache[d.id] = []; }
+                await new Promise(r => setTimeout(r, 100));
+            }
+            document.getElementById('tf-loading').style.display = 'none';
+        }
+
+        filtrados = filtrados.filter(d => {
+            const tasks = tfTasksCache[d.id] || [];
+            const open  = tasks.filter(t => !t.completed);
+            const atras = open.filter(t => t.dueDate && t.dueDate < hoje);
+            if (tfFiltroStatus === 'sem')      return tasks.length === 0;
+            if (tfFiltroStatus === 'com')      return tasks.length > 0;
+            if (tfFiltroStatus === 'atrasada') return atras.length > 0;
+            return true;
+        });
+    }
+
+    tfDealsVisiveis = filtrados;
+    renderizarTabelaTarefas(1);
+}
+
+function renderizarTabelaTarefas(pagina = 1) {
+    const ini  = (pagina - 1) * TF_PER_PAGE;
+    const pag  = tfDealsVisiveis.slice(ini, ini + TF_PER_PAGE);
+    const total = tfDealsVisiveis.length;
+    const hoje  = new Date().toISOString().split('T')[0];
+    const isAdmin = sessaoAtual?.role === 'admin';
+
+    if (total === 0) {
+        document.getElementById('tf-tabela').style.display = 'none';
+        document.getElementById('tf-empty').style.display  = 'block';
+        document.getElementById('tf-empty').innerHTML =
+            '<i class="fas fa-inbox" style="font-size:36px;margin-bottom:12px;display:block;opacity:0.4;"></i><p>Nenhum negócio encontrado com os filtros selecionados.</p>';
+        return;
+    }
+    document.getElementById('tf-empty').style.display  = 'none';
+    document.getElementById('tf-tabela').style.display = 'block';
+
+    document.getElementById('tf-tabela-body').innerHTML = pag.map(d => {
+        const tasks  = tfTasksCache[d.id];
+        const temInfo = tasks !== undefined;
+        const open   = temInfo ? tasks.filter(t => !t.completed) : null;
+        const atras  = open   ? open.filter(t => t.dueDate && t.dueDate < hoje) : null;
+
+        let taskBadge = '<span style="color:#94a3b8;font-size:11px;">—</span>';
+        if (temInfo && tasks.length === 0) taskBadge = '<span style="font-size:11px;color:#94a3b8;">Sem tarefa</span>';
+        else if (temInfo && atras.length > 0) taskBadge = `<span style="font-size:11px;font-weight:700;color:#dc2626;">⚠ ${atras.length} atrasada(s)</span>`;
+        else if (temInfo && open.length > 0)  taskBadge = `<span style="font-size:11px;font-weight:600;color:#2563eb;">📋 ${open.length} aberta(s)</span>`;
+        else if (temInfo) taskBadge = '<span style="font-size:11px;color:#16a34a;">✅ Todas concluídas</span>';
+
+        const btnTarefas = `<button class="btn btn-secondary btn-sm" onclick="abrirDealTasks(${d.id},'${(d.title||'').replace(/'/g,"&#39;")}',${d.owner?.id||0})" title="Ver/Criar Tarefas"><i class="fas fa-tasks"></i></button>`;
+        const btnMover   = `<button class="btn btn-secondary btn-sm" onclick="abrirMoverEtapa(${d.id},'${(d.title||'').replace(/'/g,"&#39;")}',${d.dealStage?.id||0})" title="Mover Etapa"><i class="fas fa-exchange-alt"></i></button>`;
+
+        return `<div style="display:grid;grid-template-columns:2fr 1.2fr 1fr 1fr 1fr 130px;padding:10px 16px;border-bottom:1px solid #f8fafc;align-items:center;font-size:13px;"
+                     onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='';">
+            <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.title||''}">${d.title||'—'}</div>
+            <div style="color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;">${d.organization?.name||'—'}</div>
+            <div style="font-size:12px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.dealStage?.name||'—'}</div>
+            <div style="font-size:12px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.owner?.name||'—'}</div>
+            <div>${taskBadge}</div>
+            <div style="display:flex;gap:4px;">${btnTarefas}${btnMover}</div>
+        </div>`;
+    }).join('');
+
+    // Paginação
+    const fim = Math.min(pagina * TF_PER_PAGE, total);
+    document.getElementById('tf-pager-info').textContent = `${ini+1}–${fim} de ${total} negócios`;
+    document.getElementById('tf-btn-prev').disabled = pagina <= 1;
+    document.getElementById('tf-btn-next').disabled = fim >= total;
+    document.getElementById('tf-btn-prev').onclick = () => renderizarTabelaTarefas(pagina - 1);
+    document.getElementById('tf-btn-next').onclick = () => renderizarTabelaTarefas(pagina + 1);
+}
+
+function tfPrevPage() {}
+function tfNextPage() {}
+
+// ── Sub-abas ──────────────────────────────────────────────
+function mostrarSubTabTarefas(tab) {
+    document.getElementById('subtab-negocios').style.display   = tab === 'negocios'   ? 'block' : 'none';
+    document.getElementById('subtab-calendario').style.display = tab === 'calendario' ? 'block' : 'none';
+    const btnN = document.getElementById('tab-negocios-btn');
+    const btnC = document.getElementById('tab-calendario-btn');
+    btnN.style.background = tab === 'negocios'   ? '#2563eb' : 'none';
+    btnN.style.color      = tab === 'negocios'   ? 'white'   : '#64748b';
+    btnC.style.background = tab === 'calendario' ? '#2563eb' : 'none';
+    btnC.style.color      = tab === 'calendario' ? 'white'   : '#64748b';
+    if (tab === 'calendario') carregarTarefasCalendario();
+}
+
+// ── Modal: Tarefas do Negócio ─────────────────────────────
+async function abrirDealTasks(dealId, dealTitle, ownerId) {
+    tfDealAtual = { id: dealId, title: dealTitle, ownerId };
+    document.getElementById('deal-tasks-titulo').innerHTML =
+        `<i class="fas fa-tasks" style="color:#2563eb;margin-right:8px;"></i>${dealTitle}`;
+    document.getElementById('deal-tasks-criar-btn').onclick =
+        () => abrirCriarTarefa(dealId, dealTitle, '', ownerId);
+    document.getElementById('deal-tasks-lista').innerHTML =
+        '<div style="text-align:center;padding:20px;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i></div>';
+    document.getElementById('modal-deal-tasks').classList.add('open');
+
+    try {
+        const r = await fetch(`${AGENDOR_PROXY}/deal-tasks?dealId=${dealId}`);
+        const d = await r.json();
+        const tasks = Array.isArray(d) ? d : (d.data || []);
+        tfTasksCache[dealId] = tasks;
+        renderizarDealTasksModal(tasks, dealId);
+    } catch (e) {
+        document.getElementById('deal-tasks-lista').innerHTML =
+            `<p style="color:#dc2626;">Erro: ${e.message}</p>`;
+    }
+}
+
+function renderizarDealTasksModal(tasks, dealId) {
+    const hoje = new Date().toISOString().split('T')[0];
+    if (!tasks.length) {
+        document.getElementById('deal-tasks-lista').innerHTML =
+            '<div style="text-align:center;padding:24px;color:#94a3b8;"><i class="fas fa-inbox" style="font-size:28px;opacity:0.4;margin-bottom:8px;display:block;"></i>Nenhuma tarefa cadastrada para este negócio.</div>';
+        return;
+    }
+    const fmtDt = s => s ? new Date(s).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+    const tipoMap = { LIGACAO:'📞', REUNIAO:'🤝', EMAIL:'📧', VISITA:'🚗', PROPOSTA:'📄' };
+
+    document.getElementById('deal-tasks-lista').innerHTML = tasks.map(t => {
+        const atrasada = !t.completed && t.dueDate && t.dueDate < hoje;
+        const cor = t.completed ? '#16a34a' : atrasada ? '#dc2626' : '#2563eb';
+        const btnFinalizar = !t.completed
+            ? `<button class="btn btn-success btn-sm" onclick="finalizarTarefa(${dealId},${t.id})" title="Finalizar tarefa" style="padding:5px 10px;"><i class="fas fa-check"></i></button>`
+            : '';
+        return `
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;border-radius:8px;background:${t.completed?'#f0fdf4':'#f8fafc'};margin-bottom:8px;border-left:3px solid ${cor};">
+            <div style="font-size:18px;">${tipoMap[t.type]||'📝'}</div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:600;color:${cor};${t.completed?'text-decoration:line-through;':''}">${t.text||'(sem descrição)'}</div>
+                <div style="font-size:11px;color:#94a3b8;margin-top:3px;display:flex;gap:12px;flex-wrap:wrap;">
+                    <span><i class="fas fa-calendar"></i> ${fmtDt(t.dueDate)} ${atrasada?'<strong style="color:#dc2626;">(atrasada)</strong>':''}</span>
+                    ${(t.assignedUsers||[]).length?`<span><i class="fas fa-user"></i> ${t.assignedUsers[0]?.name||''}</span>`:''}
+                    ${t.completed?'<span style="color:#16a34a;"><i class="fas fa-check-circle"></i> Concluída</span>':''}
+                </div>
+            </div>
+            ${btnFinalizar}
+        </div>`;
+    }).join('');
+}
+
+async function finalizarTarefa(dealId, taskId) {
+    if (!confirm('Marcar esta tarefa como concluída?')) return;
+    try {
+        const r = await fetch(`${AGENDOR_PROXY}/complete-task`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dealId, taskId })
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        delete tfTasksCache[dealId]; // invalida cache
+        await abrirDealTasks(dealId, tfDealAtual?.title || '', tfDealAtual?.ownerId || 0);
+        toast('Tarefa concluída!', 'ok');
+        // Atualiza badge na tabela se visível
+        aplicarFiltrosTarefas();
+    } catch (e) { toast('Erro: ' + e.message, 'err'); }
+}
+
+function fecharDealTasks() { document.getElementById('modal-deal-tasks').classList.remove('open'); }
+
+// ── Modal: Mover Etapa ────────────────────────────────────
+function abrirMoverEtapa(dealId, dealTitle, stageAtualId) {
+    tfMoverDealId = dealId;
+    document.getElementById('mover-etapa-deal').textContent = `Negócio: ${dealTitle}`;
+    atualizarEtapasSelect();
+    // Tenta pré-selecionar o funil/etapa atual
+    for (const f of tfFunis) {
+        const stage = (f.dealStages||[]).find(s => s.id === stageAtualId);
+        if (stage) {
+            document.getElementById('mover-funil-sel').value = f.id;
+            atualizarEtapasSelect();
+            document.getElementById('mover-etapa-sel').value = stageAtualId;
+            break;
+        }
+    }
+    document.getElementById('modal-mover-etapa').classList.add('open');
+}
+
+function atualizarEtapasSelect() {
+    const funilId = parseInt(document.getElementById('mover-funil-sel').value);
+    const funil   = tfFunis.find(f => f.id === funilId);
+    const sel     = document.getElementById('mover-etapa-sel');
+    sel.innerHTML = (funil?.dealStages||[])
+        .sort((a,b) => a.sequence - b.sequence)
+        .map(s => `<option value="${s.id}">${s.sequence}. ${s.name}</option>`).join('');
+}
+
+async function confirmarMoverEtapa() {
+    const stageId = parseInt(document.getElementById('mover-etapa-sel').value);
+    if (!stageId || !tfMoverDealId) return;
+    try {
+        const r = await fetch(`${AGENDOR_PROXY}/move-stage`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dealId: tfMoverDealId, stageId })
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        // Atualiza cache local
+        const deal = tfDeals.find(d => d.id === tfMoverDealId);
+        if (deal) {
+            for (const f of tfFunis) {
+                const s = (f.dealStages||[]).find(x => x.id === stageId);
+                if (s) { deal.dealStage = { id: s.id, name: s.name }; break; }
+            }
+        }
+        fecharMoverEtapa();
+        aplicarFiltrosTarefas();
+        toast('Etapa atualizada com sucesso!', 'ok');
+    } catch (e) { toast('Erro: ' + e.message, 'err'); }
+}
+
+function fecharMoverEtapa() { document.getElementById('modal-mover-etapa').classList.remove('open'); }
+
+// ── Calendário de Atividades ──────────────────────────────
+async function carregarTarefasCalendario() {
+    document.getElementById('cal-loading').style.display = 'block';
+    document.getElementById('cal-grid').innerHTML        = '';
+    calTarefas = {};
+
+    // Busca tarefas do mês atual (± 1 mês)
+    const ini  = new Date(calMes.getFullYear(), calMes.getMonth(), 1);
+    const fim  = new Date(calMes.getFullYear(), calMes.getMonth() + 1, 0);
+    const since = ini.toISOString().split('T')[0] + 'T00:00:00Z';
+    const until = fim.toISOString().split('T')[0] + 'T23:59:59Z';
+
+    try {
+        let pagina = 1, total = 0;
+        const todasTarefas = [];
+        while (true) {
+            const r = await fetch(`${AGENDOR_PROXY}/all-tasks?per_page=100&page=${pagina}&since=${since}&until=${until}`);
+            const d = await r.json();
+            const lista = Array.isArray(d) ? d : (d.data || []);
+            if (pagina === 1) total = d.meta?.totalCount || lista.length;
+            if (!lista.length) break;
+            todasTarefas.push(...lista);
+            if (todasTarefas.length >= total || lista.length < 100) break;
+            pagina++;
+            await new Promise(r => setTimeout(r, 260));
+        }
+        // Agrupa por data de vencimento
+        for (const t of todasTarefas) {
+            const dia = (t.dueDate || '').split('T')[0];
+            if (!dia) continue;
+            if (!calTarefas[dia]) calTarefas[dia] = [];
+            calTarefas[dia].push(t);
+        }
+    } catch {}
+
+    document.getElementById('cal-loading').style.display = 'none';
+    renderizarCalendario();
+}
+
+function calNavMes(delta) {
+    calMes = new Date(calMes.getFullYear(), calMes.getMonth() + delta, 1);
+    carregarTarefasCalendario();
+}
+
+function renderizarCalendario() {
+    const filtroUser = document.getElementById('cal-filtro-user')?.value || '';
+    const hoje = new Date().toISOString().split('T')[0];
+    const ano  = calMes.getFullYear();
+    const mes  = calMes.getMonth();
+
+    document.getElementById('cal-titulo').textContent =
+        calMes.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+    const primeiroDia = new Date(ano, mes, 1).getDay(); // 0=Dom
+    const ultimoDia   = new Date(ano, mes + 1, 0).getDate();
+
+    let html = '';
+    // Células vazias antes do dia 1
+    for (let i = 0; i < primeiroDia; i++) {
+        html += '<div style="min-height:80px;border:1px solid #f1f5f9;background:#fafafa;"></div>';
+    }
+    // Dias do mês
+    for (let d = 1; d <= ultimoDia; d++) {
+        const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        let tarefasDia = calTarefas[dataStr] || [];
+        if (filtroUser) tarefasDia = tarefasDia.filter(t => String((t.assignedUsers||[])[0]?.id) === filtroUser);
+
+        const isHoje   = dataStr === hoje;
+        const qtd      = tarefasDia.length;
+        const atrasadas = tarefasDia.filter(t => !t.completed).length;
+        const bgColor  = isHoje ? '#eff6ff' : '';
+        const border   = isHoje ? '2px solid #2563eb' : '1px solid #f1f5f9';
+        const badge    = qtd > 0
+            ? `<div style="margin-top:4px;background:${atrasadas>0?'#fee2e2':'#dbeafe'};color:${atrasadas>0?'#b91c1c':'#1d4ed8'};border-radius:20px;padding:2px 8px;font-size:11px;font-weight:700;display:inline-block;">${qtd} atividade${qtd>1?'s':''}</div>`
+            : '';
+
+        html += `
+        <div onclick="abrirCalDia('${dataStr}',${d})"
+             style="min-height:80px;border:${border};background:${bgColor};padding:8px;cursor:${qtd?'pointer':'default'};transition:background 0.15s;"
+             ${qtd?`onmouseover="this.style.background='#f0f7ff';" onmouseout="this.style.background='${bgColor}';"`:''}>
+            <div style="font-size:14px;font-weight:${isHoje?'800':'600'};color:${isHoje?'#2563eb':'#374151'};">${d}</div>
+            ${badge}
+        </div>`;
+    }
+
+    document.getElementById('cal-grid').innerHTML = html;
+}
+
+function abrirCalDia(dataStr, dia) {
+    const filtroUser = document.getElementById('cal-filtro-user')?.value || '';
+    let tarefas = calTarefas[dataStr] || [];
+    if (filtroUser) tarefas = tarefas.filter(t => String((t.assignedUsers||[])[0]?.id) === filtroUser);
+    if (!tarefas.length) return;
+
+    const dtFmt = new Date(dataStr + 'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+    document.getElementById('cal-dia-titulo').innerHTML =
+        `<i class="fas fa-calendar-day" style="color:#2563eb;margin-right:8px;"></i>${dtFmt}`;
+
+    const hoje    = new Date().toISOString().split('T')[0];
+    const tipoMap = { LIGACAO:'📞', REUNIAO:'🤝', EMAIL:'📧', VISITA:'🚗', PROPOSTA:'📄' };
+    document.getElementById('cal-dia-lista').innerHTML = tarefas.map(t => {
+        const atrasada = !t.completed && dataStr < hoje;
+        const cor = t.completed ? '#16a34a' : atrasada ? '#dc2626' : '#2563eb';
+        return `
+        <div style="display:flex;gap:10px;padding:12px;border-radius:8px;background:#f8fafc;margin-bottom:8px;border-left:3px solid ${cor};">
+            <div style="font-size:18px;">${tipoMap[t.type]||'📝'}</div>
+            <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:${cor};${t.completed?'text-decoration:line-through;':''}">${t.text||'(sem descrição)'}</div>
+                <div style="font-size:11px;color:#94a3b8;margin-top:3px;">
+                    ${(t.assignedUsers||[]).map(u=>u.name).join(', ')||'Sem responsável'} ·
+                    ${t.deal?.title||'Negócio não identificado'}
+                    ${t.completed?' · <span style="color:#16a34a;">✅ Concluída</span>':''}
+                    ${atrasada?' · <span style="color:#dc2626;">⚠ Atrasada</span>':''}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('modal-cal-dia').classList.add('open');
+}
+
+function fecharCalDia() { document.getElementById('modal-cal-dia').classList.remove('open'); }
+
+// =========================================================
 // CRIAR TAREFA NO AGENDOR (somente ADM)
 // =========================================================
 
@@ -4236,20 +4872,47 @@ function gravarSessao(s) {
 // Inicialização — verifica sessão ou mostra login
 // ---------------------------------------------------------
 async function inicializarAuth() {
-    // Cria o admin padrão se ainda não existir nenhum usuário
-    const users = lerUsuarios();
+    // Cria o admin padrão e os usuários iniciais se necessário
+    let users = lerUsuarios();
     if (users.length === 0) {
         const hash = await hashSenha('Fern9205');
-        gravarUsuarios([{
-            id: 1,
-            email: 'fernando.silva@tecwiselatam.com',
-            nome:  'Fernando Silva',
-            passwordHash:  hash,
-            role:          'admin',
-            primeiroAcesso: false,
+        users = [{
+            id: 1, email: 'fernando.silva@tecwiselatam.com',
+            nome: 'Fernando Silva', passwordHash: hash,
+            role: 'admin', primeiroAcesso: false,
             criadoEm: new Date().toISOString()
-        }]);
+        }];
+        gravarUsuarios(users);
     }
+
+    // Cadastra os usuários iniciais (senha Tw3100, primeiro acesso)
+    const usuariosIniciais = [
+        { email: 'gustavo.carvalho@tecwise.cl',           nome: 'Gustavo Carvalho'    },
+        { email: 'warllison.santos@tecwiselatam.com',     nome: 'Warllison Santos'    },
+        { email: 'jeandson.lopes@tecwiselatam.com',       nome: 'Jeandson Lopes'      },
+        { email: 'alan.rodrigues@tecwiselatam.com',       nome: 'Alan Rodrigues'      },
+        { email: 'william.sacramento@tecwiselatam.com',   nome: 'William Sacramento'  },
+        { email: 'matheus.camilo@tecwiselatam.com',       nome: 'Matheus Camilo'      },
+        { email: 'guilherme.esteves@tecwiselatam.com',    nome: 'Guilherme Esteves'   },
+        { email: 'tomas.castillo@tecwise.cl',             nome: 'Tomas Castillo'      },
+        { email: 'eduardo.castro@tecwiselatam.com',       nome: 'Eduardo Castro'      },
+        { email: 'henrique.castro@tecwiselatam.com',      nome: 'Henrique Castro'     },
+    ];
+    let atualizou = false;
+    for (const u of usuariosIniciais) {
+        if (!users.find(x => x.email.toLowerCase() === u.email.toLowerCase())) {
+            const h = await hashSenha('Tw3100');
+            users.push({
+                id: Date.now() + Math.random(),
+                email: u.email, nome: u.nome,
+                passwordHash: h, role: 'user',
+                primeiroAcesso: true,
+                criadoEm: new Date().toISOString()
+            });
+            atualizou = true;
+        }
+    }
+    if (atualizou) gravarUsuarios(users);
 
     const sessao = lerSessao();
     if (sessao && sessao.email) {
