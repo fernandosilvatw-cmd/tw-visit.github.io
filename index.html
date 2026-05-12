@@ -4266,6 +4266,7 @@ let calMes         = new Date(); // mês sendo exibido no calendário
 
 // ── Carregamento inicial da aba Tarefas ───────────────────
 async function carregarTarefas() {
+    tfResumoData = null; // invalida cache do resumo ao reentrar na aba
     mostrarSubTabTarefas('negocios');
     await carregarFunisEtapas();
     await carregarDealsParaTarefas();
@@ -4510,11 +4511,11 @@ async function carregarResumoTarefas() {
             if (!porUsuario[ownerId]) {
                 porUsuario[ownerId] = { nome: ownerNome, comTarefa: [], semTarefa: [], atrasada: [] };
             }
-            const tasks     = tasksByDeal[d.id] || [];
-            const temAtras  = tasks.some(t => t.dueDate && t.dueDate < hoje);
-            if (tasks.length > 0) porUsuario[ownerId].comTarefa.push(d.id);
-            else                  porUsuario[ownerId].semTarefa.push(d.id);
-            if (temAtras)         porUsuario[ownerId].atrasada.push(d.id);
+            const tasks    = tasksByDeal[d.id] || [];
+            const temAtras = tasks.some(t => (t.dueDate||'').split('T')[0] < hoje && (t.dueDate||'').split('T')[0]);
+            if (temAtras)              porUsuario[ownerId].atrasada.push(d.id);
+            else if (tasks.length > 0) porUsuario[ownerId].comTarefa.push(d.id);
+            else                       porUsuario[ownerId].semTarefa.push(d.id);
         });
 
         tfResumoData = porUsuario;
